@@ -1,5 +1,5 @@
-
 namespace cuWrap{
+
 	void initCuda(bool showGpuInfo);
 	 void malloc(void ** p, size_t size);
 	 void free(void * p);
@@ -68,7 +68,5 @@ namespace cuWrap{
 	 void Equ(float *dest,const  float * x, const float *y, int len);
 	 void Equ(double *dest,const  double * x, const double *y, int len);
 	 void NotEqu(float *dest,const  float * x, const float *y, int len);
-	 void NotEqu(double *dest,const  double * x, const double *y, int len);
-
-	
+	 void NotEqu(double *dest,const  double * x, const double *y, int len);	
 };

@@ -55,12 +55,25 @@ namespace matrixGlobal{
 
 	}
 	const bool randDebug = false;
-	void MatXInit(bool showGpuInfo = true){
-		cudaInit(showGpuInfo);
+	void MatXInit(bool showMatXInfo = true){
+		if(showMatXInfo){
+			if(MatX_USE_GPU){
+				cout<<"\nMOD: GPU/CPU";
+			}else{
+				cout<<"\nMOD: CPU ONLY";
+			}
+			if(randDebug){
+				cout<<"\nRand Debug mod";
+			}
+		}
+		cuWrap::initCuda(showMatXInfo);
 		if(randDebug){
-			srand(0);
+			srand(0);			
 		}else{
 			srand(time(NULL));
+		}
+		if(showMatXInfo){
+			cout<<"\nMatX started\n";
 		}
 	}
 };

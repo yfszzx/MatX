@@ -11,9 +11,9 @@
 #pragma comment(lib, "pthreadVC2.lib")
 using namespace Eigen;
 using namespace std;
-#include "cuda/cuWrap.h"
+#include "MatXCuda/cuWrap.h"
 #ifdef MatX_CPU_ONLY
-#include "cuda/emptyCuWrap.h"
+#include "MatXCuda/emptyCuWrap.h"
 #define MatX_USE_GPU false
 #else
 #define MatX_USE_GPU true

@@ -122,14 +122,18 @@ void cuWrap::initCuda(bool showGpuInfo){
 	cuda_grid_sizeY = prop.maxGridSize[1];
 	CUBLAS_CHECK(cublasCreate(&cublasHandle));
 	cuda_inited = true;
-	if(showGpuInfo){
-		cout<<"\ncuda_threads_num:"<<cuda_threads_num;
-		cout<<"\ncuda_grid_sizeX:"<<cuda_grid_sizeX;
-		cout<<"\ncuda_grid_sizeY:"<<cuda_grid_sizeY;
-	}
+	
 	cuda_params::init_one_array();
 	CURAND_CHECK( curandCreateGenerator(&curandGenerator, CURAND_RNG_PSEUDO_DEFAULT) );
 	CURAND_CHECK( curandSetPseudoRandomGeneratorSeed(curandGenerator, time(NULL)));
+	if(showGpuInfo){
+		cout<<"\nGPU:"<<prop.name;
+		/*
+		cout<<"\ncuda_threads_num:"<<cuda_threads_num;
+		cout<<"\ncuda_grid_sizeX:"<<cuda_grid_sizeX;
+		cout<<"\ncuda_grid_sizeY:"<<cuda_grid_sizeY;
+		*/
+	}
 };
 void cuWrap::malloc(void ** p,size_t s){
 	cudaMalloc(p,s);	
