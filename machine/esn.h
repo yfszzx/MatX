@@ -56,9 +56,6 @@ public:
 		initConfig();
 	};
 	virtual void train(){
-		dt.makeBatch(dt.trainNum);
-		dt.loadBatch();
-
 		//生成系数的、特定谱半径的连接矩阵
 		MatX tmp = (MatX::Random(nodes, nodes) > MatX::Constant(nodes, nodes,  (1 - sparseDegree * 2)));
 		Wjnt = Wjnt.cwiseProduct(tmp);
@@ -67,7 +64,7 @@ public:
 		MatX * HX = new MatX[dt.seriesLen];	
 		MatX ones = MatX::Ones(dt.X[0].rows());
 		MatX I = MatX::eye(hNum);	
-		MatX A = MatX::Zero(hNum, hNum);		
+		MatX A = MatX::Zero(hNum, hNum);	
 		MatX H = tanh(dt.X[0] * Win );
 		for(int i = 1; i < dt.seriesLen; i++){
 			HX[i] = H.colJoint(dt.X[i]).colJoint(ones);

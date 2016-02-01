@@ -7,40 +7,8 @@ string MachineBase< TYPE, CUDA>::binFileName(int idx){
 	nm<<machPath<<"machine_"<<idx<<".bin";
 	return nm.str();
 }
-template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::trainInit(){
-	cout<<"\n训练进行中.....";
-	Ws.clear();
-	initWs();
-	bestWs = Ws;
-	string rcdFl = machPath + "recorder.csv";
-	if(fileIsExist(binFileName())){
-		rcdFile.open(rcdFl, ios::app);
-		rcdFile<<"[continue]"<<endl;	
-	}else{
-		if( dt.validFoldIdx == 0){
-			rcdFile.open(rcdFl);
-			recordFileHead();
-		}else{
-			rcdFile.open(rcdFl, ios::app);
-		}
-		rcdFile<<"[valid "<<dt.validFoldIdx<<"]"<<endl;
-	}
 
-}
-template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::trainRun(){
-	for(int i = 0; i< dt.crossFolds; i++){
-		dt.makeValid(i);		
-		if(overedFile()){
-			continue;
-		}
-		trainInit();	
-		train();
-		save(true);
-		rcdFile.close();
-	}
-}
+
 template <typename TYPE, bool CUDA>
 bool MachineBase< TYPE, CUDA>::overedFile(){
 	string binFl = binFileName();
@@ -142,6 +110,7 @@ void MachineBase< TYPE, CUDA>::initSet(int configIdx, string name, float val){
 	configName[configIdx] = name;
 	configRecorder[configIdx]= val;
 	setConfigValue(configIdx, val);
+
 };
 template <typename TYPE, bool CUDA>
 MachineBase< TYPE, CUDA>::~MachineBase(){
@@ -188,6 +157,7 @@ void MachineBase< TYPE, CUDA>::operator ()(string s, float val){
 	}
 	if(idx == -1){
 		cout<<"\n没有找到参数"<<s;
+		return;
 	}
 	setConfigValue(idx, val);
 };
@@ -199,41 +169,103 @@ void MachineBase< TYPE, CUDA>::showConfigSetting(){
 			cout<<"\n["<<i<<"]"<<configName[i]<<"\t"<<configRecorder[i];
 		}		
 	}
-};/*
+};
 template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::loadBatch(int size){
-	dt.makeBatch(size);
-	dt.loadBatch();
-}*/
-template <typename TYPE, bool CUDA>
-void * ANNBase<TYPE, CUDA>::threadTrain( void * _this){
-	((ANNBase<TYPE, CUDA> *)_this)->train();
+void * MachineBase<TYPE, CUDA>::threadTrain( void * _this){
+	MachineBase<TYPE, CUDA> & t = * (MachineBase<TYPE, CUDA> *)_this;
+	t.train();
+	t.batchFinished = t.trainOperate();	
 	return NULL;
 }
 template <typename TYPE, bool CUDA>
-void * ANNBase<TYPE, CUDA>::threadMakeBatch( void * _this){	
-	srand(time(NULL) + randSeeder);
+void * MachineBase<TYPE, CUDA>::threadMakeBatch( void * _this){	
 	dataSetBase<TYPE, CUDA> & dt = ((ANNBase<TYPE, CUDA> *)_this)->dt;
-	dt.makeBatch(((ANNBase<TYPE, CUDA> *)_this)->batchSizeControlar * dt.trainNum);
+	srand(time(NULL) + ((MachineBase<TYPE, CUDA> *)_this)->randSeeder);
+	dt.makeBatch(((MachineBase<TYPE, CUDA> *)_this)->getBatchSize());
 	return NULL;
 }
-void MachineBase< TYPE, CUDA>::mainTrain(){
+template <typename TYPE, bool CUDA>
+void  MachineBase<TYPE, CUDA>::averageWs(MatXG & Wdest, const  MatXG & Wsrc, int pastNum){
+	Wdest *= TYPE(pastNum)/(pastNum + 1);
+	Wdest += Wsrc/TYPE(pastNum + 1);
+}
+template <typename TYPE, bool CUDA>
+void MachineBase<TYPE, CUDA>::kbPause(){	
+	if(_kbhit()){
+		char s = getchar();
+		if(s == 'p'||s=='P'){
+			dt.pauseAction();
+		}
+	}
+}
+
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::trainInitialize(){
+	cout<<"\n训练进行中.....";
+	Ws.clear();
+	initWs();
+	bestWs = Ws;
+	string rcdFl = machPath + "recorder.csv";
+	if(fileIsExist(binFileName())){
+		load();
+		rcdFile.open(rcdFl, ios::app);
+		rcdFile<<"[continue]"<<endl;	
+	}else{
+		rcdTimer.set();
+		if( dt.validFoldIdx == 0){
+			rcdFile.open(rcdFl);
+			recordFileHead();
+		}else{
+			rcdFile.open(rcdFl, ios::app);
+		}
+		rcdFile<<"[valid "<<dt.validFoldIdx<<"]"<<endl;
+	}
+
+}
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::trainRun(){
+	for(int i = 0; i< dt.crossFolds; i++){
+		dt.makeValid(i);		
+		if(overedFile()){
+			continue;
+		}
+		trainInitialize();	
+		trainMain();
+		save(true);
+		rcdFile.close();
+	}
+}
+template <typename TYPE, bool CUDA>
+void MachineBase<TYPE, CUDA>::loadBatch(){
+	dt.loadBatch();
+	batchInitLoss = dt.batchInitLoss;
+	batchSize = dt.batchSize;
+}
+template <typename TYPE, bool CUDA>
+void MachineBase<TYPE, CUDA>::trainMain(){
+	trainCount = 0;	
 	if(dt.randBatch){
-		dt.makeBatch();
+		dt.makeBatch(getBatchSize());			
 		do{
 			loadBatch();
 			pthread_t tid1, tid2;
 			void *ret1,*ret2;
 			pthread_create(&tid1, NULL, threadTrain, (void *)this);
-			pthread_create(&tid2, NULL, threadMakeData, (void *)this);
+			randSeeder = rand();
+			pthread_create(&tid2, NULL, threadMakeBatch, (void *)this);			
 			pthread_join(tid1, &ret1);
 			pthread_join(tid2, &ret2);
-		}
+			if(batchFinished){
+				break;
+			}
+			trainCount ++;
+			kbPause();		
+		}while(1);
 
 	}else{
 		dt.makeBatch();
-		dt.loadBatch();
+		loadBatch();
 		train();
-		train();
+		trainOperate();
 	}
 }

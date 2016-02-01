@@ -88,12 +88,12 @@ typedef MatriX<float, false> MatCF;
 typedef MatriX<float, MatX_USE_GPU> MatGF;
 typedef MatriX<double, false> MatCD;
 typedef MatriX<double, MatX_USE_GPU> MatGD;
-typedef MatGroup<float, false> MatGrpCF;
-typedef MatGroup<float, MatX_USE_GPU> MatGrpGF;
+typedef MatGroup<float, false> MatCFG;
+typedef MatGroup<float, MatX_USE_GPU> MatGFG;
+typedef MatGroup<double, false> MatCDG;
+typedef MatGroup<double, MatX_USE_GPU> MatGDG;
 typedef MatGroup<double, false> MatGrpCD;
-typedef MatGroup<double, MatX_USE_GPU> MatGrpGD;
-typedef MatGroup<double, false> MatGrpCD;
-typedef MatGroup<double, MatX_USE_GPU> MatGrpGD;
+typedef MatGroup<double, MatX_USE_GPU> MatGDG;
 typedef Matrix<float, -1, -1> eMatF;
 typedef Matrix<double, -1, -1> eMatD;
 

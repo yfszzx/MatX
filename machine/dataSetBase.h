@@ -36,7 +36,7 @@ public:
 	double batchInitLoss;
 	double validInitLoss;
 	void loadBatch();
-	void makeBatch(int size);		
+	void makeBatch(int size = 0);		
 	virtual void makeValidList(int validIdx);
 	virtual void showResult(){};
 	virtual void showValidsResult(MatGroup<TYPE, CUDA> &T, MatGroup<TYPE, CUDA> &Y){};

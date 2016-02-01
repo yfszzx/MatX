@@ -216,7 +216,11 @@ void searchTool<TYPE, CUDA>::recordLoss(float loss){
 		if(lossMean == 0){
 			Z =tmpMean/sqrt(tmpMSE/confirmRounds);
 		}else{
-			Z =(lossMean - tmpMean)/sqrt((tmpMSE + lossMSE)/confirmRounds);
+			if(tmpMSE + lossMSE < FLT_MIN){
+				Z = -1000;
+			}else{
+				Z =(lossMean - tmpMean)/sqrt((tmpMSE + lossMSE)/confirmRounds);
+			}
 			if(Z < Zscale ){
 				notableFlag = false;
 			}

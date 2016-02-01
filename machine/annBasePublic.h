@@ -3,7 +3,7 @@ void ANNBase<TYPE, CUDA>::saveParameters(ofstream & fl){
 	fl.write((char *)&batchTrainRounds, sizeof(float));
 	fl.write((char *)&batchSizeControlar, sizeof(float));
 	fl.write((char *)& minValidLoss, sizeof(float));
-	fl.write((char *)& trnCount, sizeof(int));
+	fl.write((char *)& trainCount, sizeof(int));
 	double tm = rcdTimer.get();
 	fl.write((char *)& tm, sizeof(double));
 	int rn = Search.rounds();
@@ -14,7 +14,7 @@ void ANNBase<TYPE, CUDA>::loadParameters(ifstream & fl){
 	fl.read((char *)&batchTrainRounds, sizeof(float));
 	fl.read((char *)&batchSizeControlar, sizeof(float));
 	fl.read((char *)& minValidLoss, sizeof(float));
-	fl.read((char *)& trnCount, sizeof(int));
+	fl.read((char *)& trainCount, sizeof(int));
 	double tm;
 	fl.read((char *)& tm, sizeof(double));
 	rcdTimer.set(tm);
@@ -26,12 +26,23 @@ template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::recordFileHead(){
 	rcdFile<<"rounds,data_loss,valid_loss,min_loss,batchTrainRound,batchSize,Z,time"<<endl;	
 };
-
+template <typename TYPE, bool CUDA>
+void ANNBase<TYPE, CUDA>::initWs(bool trainMod){
+	if(trainMod){
+		minValidLoss = 0;
+		trainLoss = 0;
+		batchTrainRounds = initBatchTrainRounds;
+		batchSizeControlar = initBatchSize;
+		Search.reset();
+	}	
+	annInitWs(trainMod);
+};
 template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::setConfigValue(int idx, float val){
 	configRecorder[idx] = val;
-	if(idx < subConfigsNum){
+	if(idx < subConfigsNum || subConfigsNum == -1){
 		annSetConfigValue(idx , val);
+		Search.changeBatch();
 		return;
 	}
 	idx -= subConfigsNum;
@@ -83,8 +94,8 @@ void ANNBase<TYPE, CUDA>::setConfigValue(int idx, float val){
 }
 template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::initConfigValue(){
-	annInitConfigValue();
 	subConfigsNum = -1;
+	annInitConfigValue();
 	for(int i = 0; i < 100; i++){
 		if(configName[i].size()>0){
 			if(subConfigsNum < i){
@@ -100,33 +111,49 @@ void ANNBase<TYPE, CUDA>::initConfigValue(){
 	initSet(subConfigsNum + 4, "confirmRounds", 50);
 	initSet(subConfigsNum + 5, "Zscale", 1);
 	initSet(subConfigsNum + 6, "initBatchTrainRounds", 4);
-	initSet(subConfigsNum + 7,  "roundsDeceaseRate", 0.9);
-	initSet(subConfigsNum + 8, "batchInceaseRate", 1.1);
+	initSet(subConfigsNum + 7,  "roundsDeceaseRate", 0.8);
+	initSet(subConfigsNum + 8, "batchInceaseRate", 1.2);
 	initSet(subConfigsNum + 9, "saveFreq", 100);
 	initSet(subConfigsNum + 10, "showFreq",10);
 	initSet(subConfigsNum + 11, "initBatchSize", 0.1);
 	initSet(subConfigsNum + 12, "maxBatchSize", 0.8);
 	initSet(subConfigsNum + 13, "finishZScale", -0.5);	
-	
-	
 
 };
 template <typename TYPE, bool CUDA>
 ANNBase<TYPE, CUDA>::ANNBase(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){}
-
 template <typename TYPE, bool CUDA>
-void ANNBase<TYPE, CUDA>::train(){	
-	trainInit();
-	dt.makeBatch(batchSizeControlar * dt.trainNum);
-	do{		
-		threadsTasks();	
-		kbPause();		
-		if(!stepRecord()){
-			break;
+int ANNBase<TYPE, CUDA>::getBatchSize(){
+	return batchSizeControlar * dt.trainNum;
+}
+template <typename TYPE, bool CUDA>
+void ANNBase<TYPE, CUDA>::train(){		
+	int cnt = 0;
+	do{	
+		step();				
+		cnt ++;
+		if(!dt.randBatch){
+			stepRecord();	
+			kbPause();	
+			trainCount ++;
+			if(Search.getZ() < finishZScale){
+				break;
+			}
+		}else{
+			annealControll();	
 		}
-		if(finish()){
-			break;
-		}
-	}while(1);
+	}while(!dt.randBatch || cnt <= batchTrainRounds);
+	
+}
+template <typename TYPE, bool CUDA>
+bool ANNBase<TYPE, CUDA>::trainOperate(){
+	kbPause();	
+	stepRecord();		
+	
+	Search.changeBatch();	
+	if(finish()){
+		return true;
+	}
+	return false;
 
 }

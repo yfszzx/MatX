@@ -83,7 +83,6 @@ void dataSetBase<TYPE, CUDA>::makeBatch(int size){
 		}
 	}
 	batchInitLoss /= seriesLen;
-
 }
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::init(int iptNum, int optNum,   activeFunctionType  _actFunc,bool rndBatch, int crossNum, int seriNum){

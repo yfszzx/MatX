@@ -31,26 +31,28 @@ protected:
 			break;
 		}
 	}
-	virtual void initWs(bool trainMod = true){
-		Win =  MatX::Random(inputNum, nodes)/1000;
-		Wout =  MatX::Random(nodes, outputNum)/1000;
-		Bin =  MatX::Random(1, nodes)/1000;
-		Bout =  MatX::Random(1, outputNum)/1000;
+	virtual void annInitWs(bool trainMod = true){
+		Win =  MatX::Random(inputNum, nodes)/100;
+		Wout =  MatX::Random(nodes, outputNum)/100;
+		Bin =  MatX::Random(1, nodes)/100;
+		Bout =  MatX::Random(1, outputNum)/100;
 		Ws<<Win<<Wout<<Bin<<Bout;
+		if(trainMod){
 		grads.clear();
-		grads<<grad_in<<grad_out<<grad_Bin<<grad_Bout;			
+		grads<<grad_in<<grad_out<<grad_Bin<<grad_Bout;
+		}
 	}
 	virtual void predict( MatX * _Y, MatX * _X, int len = 1) {
 		_Y[0] = activeFunc(dt.actFunc, tanh(_X[0] * Win + Bin) * Wout + Bout);	
 	}
 	virtual void forward(){
 		hide = tanh(dt.X[0] * Win + Bin);
-		dt.Y[0] = activeFunc(dt.actFunc, hide * Wout + Bout);	
+		dt.Y[0] = activeFunc(dt.actFunc, hide * Wout + Bout);			
 	}
 	virtual void backward(){
 		MatX diff = dt.Y[0] - dt.T[0];
 		dataLoss = diff.squaredNorm()/batchSize/2;
-		loss = dataLoss + (regIn * Win.squaredNorm() + regOut * Wout.squaredNorm())/2;
+		loss = dataLoss + (regIn * Win.norm2() + regOut * Wout.norm2())/2;
 		diff = activeDerivFunc(dt.actFunc, diff, dt.Y[0]);
 		grad_out = hide.transpose() * diff ; 
 		grad_Bout = diff.sum();
