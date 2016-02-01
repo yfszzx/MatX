@@ -96,16 +96,7 @@ MatGroup<TYPE, CUDA>::MatGroup<TYPE, CUDA>(MatriX<TYPE, !CUDA> * m, int num){
 		mats[i] = new MatriX<TYPE, CUDA>(m[i]);		
 	}
 };
-template <typename TYPE, bool CUDA >
-MatGroup<TYPE, CUDA>::MatGroup<TYPE, CUDA>(int num){
-	matsNum = mum;
-	fixMat = false;
-	selfSpace = true;
-	mats = new MatriX<TYPE, CUDA> *[matsNum];
-	for(int i = 0; i< matsNum; i++){		
-		mats[i] = new MatriX<TYPE, CUDA>;		
-	}
-};
+
 template <typename TYPE, bool CUDA >
 MatGroup<TYPE, CUDA> & MatGroup<TYPE, CUDA>::operator <<(MatriX<TYPE, CUDA> & mat){
 	if(fixMat){

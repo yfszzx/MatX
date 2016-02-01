@@ -14,7 +14,6 @@ private:
 public:
 	MatGroup();
 	~MatGroup();
-	MatGroup(int num);
 	MatGroup<TYPE, CUDA>(const MatGroup<TYPE, CUDA> & m);
 	MatGroup<TYPE, CUDA>(const MatGroup<TYPE, !CUDA> & m);
 	MatGroup<TYPE, CUDA>(MatriX<TYPE, CUDA> * m, int num);

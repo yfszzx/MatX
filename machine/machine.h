@@ -14,14 +14,12 @@
 #include "dataSetBaseRealise.h"
 #include "searchToolRealise.h"
 #include "machineBaseRealise.h"
-#include "ANNBaseRealise.h"
-#include "MLPRealise.h"
+#include "ANNBasePrivate.h"
+#include "ANNBasePublic.h"
+//#include "MLPRealise.h"
 #include "seriesDataBaseRealise.h"
-#include "RNNRealise.h"
-#include "ELMRealise.h"
+//#include "RNNRealise.h"
+//#include "ELMRealise.h"
 #include "samples.h"
-typedef MLP<double, true> ANNGD;
-typedef MLP<double, false> ANNCD;
-typedef MLP<float, true> ANNGF;
-typedef MLP<float, false> ANNCF;
+
 

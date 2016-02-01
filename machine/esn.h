@@ -12,6 +12,28 @@ private:
 
 	int hNum;
 protected:
+	virtual void initConfigValue(){
+		initSet(0, "nodes",100);
+		initSet(1, "regOut", 0);
+		initSet(2, "SR", 0.9);
+		initSet(3,  "SD", 0.1);
+	};
+	virtual void setConfigValue(int idx, float val){
+		switch(idx){
+		case 0:
+			nodes = val;
+			break;
+		case 1:
+			regOut = val;
+			break;
+		case 2:
+			spectralRadius = val;
+			break;
+		case 3:
+			sparseDegree = val;
+			break;
+		}
+	};
 	virtual void initWs(bool trainMod = true){
 		hNum = inputNum + nodes + 1;
 		Win = MatX::Random(inputNum, nodes);
@@ -30,11 +52,8 @@ protected:
 		}
 	};
 public:
-	ESN(int _nodes, dataSetBase<TYPE, CUDA> & dtSet):MachineBase<TYPE, CUDA>(dtSet){
-		nodes = _nodes;
-		regOut = 0.1;
-		spectralRadius = 0.9;
-		sparseDegree = 0.1;
+	ESN(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){
+		initConfig();
 	};
 	virtual void train(){
 		dt.makeBatch(dt.trainNum);
@@ -72,20 +91,4 @@ public:
 		cout<<"\nLoss:"<<getValidLoss()/dt.validInitLoss;
 		dt.showResult();
 	};
-	virtual void trainSet(int con, float val){
-		switch(con){
-		case 0:
-			regOut = val;
-			break;
-		case 1:
-			spectralRadius = val;
-			break;
-		case 2:
-			sparseDegree = val;
-			break;
-		default:
-			cout<<"\n参数项目 "<<con<<" 无意义";
-		}
-	};	
-
 };

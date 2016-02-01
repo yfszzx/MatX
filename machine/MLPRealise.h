@@ -1,9 +1,9 @@
 template <typename TYPE, bool CUDA>
 void MLP<TYPE, CUDA>::initWs(bool trainMod){
-	Win =  MatriX<TYPE, CUDA>::Random(inputNum, nodes)/1000;
-	Wout =  MatriX<TYPE, CUDA>::Random(nodes, outputNum)/1000;
-	Bin =  MatriX<TYPE, CUDA>::Random(1, nodes)/1000;
-	Bout =  MatriX<TYPE, CUDA>::Random(1, outputNum)/1000;
+	Win =  MatX::Random(inputNum, nodes)/1000;
+	Wout =  MatX::Random(nodes, outputNum)/1000;
+	Bin =  MatX::Random(1, nodes)/1000;
+	Bout =  MatX::Random(1, outputNum)/1000;
 	Ws<<Win<<Wout<<Bin<<Bout;
 
 	if(trainMod && grads.num() == 0){
@@ -15,7 +15,7 @@ void MLP<TYPE, CUDA>::initWs(bool trainMod){
 	}
 }
 template <typename TYPE, bool CUDA>
-MLP<TYPE, CUDA>::MLP(int _nodes, dataSetBase<TYPE, CUDA> &dtSet):ANNBase(_nodes, dtSet){	
+MLP<TYPE, CUDA>::MLP(dataSetBase<TYPE, CUDA> &dtSet):ANNBase(_nodes, dtSet){	
 	regIn = 0;
 	regOut = 0;	
 };
@@ -26,7 +26,7 @@ void MLP<TYPE, CUDA>::forward(){
 }
 template <typename TYPE, bool CUDA>
 void MLP<TYPE, CUDA>::backward(){
-	MatriX<TYPE, CUDA> diff = dt.Y[0] - dt.T[0];
+	MatX diff = dt.Y[0] - dt.T[0];
 	dataLoss = diff.squaredNorm()/batchSize/2;
 	loss = dataLoss + (regIn * Win.squaredNorm() + regOut * Wout.squaredNorm())/2;
 	diff = activeDerivFunc(dt.actFunc, diff, dt.Y[0]);
@@ -42,11 +42,6 @@ void MLP<TYPE, CUDA>::backward(){
 }
 
 template <typename TYPE, bool CUDA>
-void MLP<TYPE, CUDA>::predict( MatriX<TYPE, CUDA> * Y,  MatriX<TYPE, CUDA>* X, int len) {
+void MLP<TYPE, CUDA>::predict( MatX * Y,  MatX* X, int len) {
 	Y[0] = activeFunc(dt.actFunc, tanh(X[0] * Win + Bin) * Wout + Bout);	
-};
-template <typename TYPE, bool CUDA>
-void MLP<TYPE, CUDA>::setRegulars(TYPE * regVal){
-	regIn = regVal[0];
-	regOut = regVal[1];
-};
+}

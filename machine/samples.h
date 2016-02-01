@@ -5,7 +5,6 @@ public:
 		init(1, 1, LINEAR, rand, crossNum);
 		load(num);
 	}
-
 	void loadData(){		
 		TYPE *tX = new TYPE[dataNum];
 		TYPE *tT = new TYPE[dataNum];
@@ -52,6 +51,7 @@ public:
 	virtual void showValidsResult(MatGroup<float, CUDA> &T, MatGroup<float, CUDA> &Y){
 		float ret = 0;
 		int num = 0;
+		cout<<"\n";
 		for(int i = 0 ; i < T.num(); i++){
 			float * Yd;
 			float * Td;
@@ -63,7 +63,6 @@ public:
 			delete [] Yd;
 			delete [] Td;
 		}
-		cout<<"\n"<<T.num();
 		cout<<"\naccuracy"<<(ret/num);
 	};
 };

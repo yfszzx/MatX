@@ -7,10 +7,10 @@
 #include <algorithm>
 #include <string>
 #include "Eigen/Eigen/Dense"
-#include "pthread/pthread.h"
-#pragma comment(lib, "pthreadVC2.lib")
 using namespace Eigen;
 using namespace std;
+#include "pthread/pthread.h"
+#pragma comment(lib, "pthreadVC2.lib")
 #include "MatXCuda/cuWrap.h"
 #ifdef MatX_CPU_ONLY
 #include "MatXCuda/emptyCuWrap.h"

@@ -82,7 +82,6 @@ void dataSetBase<TYPE, CUDA>::makeBatch(int size){
 			batchInitLoss += Thost[i].allMSE()/2 ;
 		}
 	}
-
 	batchInitLoss /= seriesLen;
 
 }

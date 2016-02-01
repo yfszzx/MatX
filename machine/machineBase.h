@@ -3,15 +3,27 @@ class MachineBase{
 private:
 	bool overedFile();
 	void trainInit();
-	MatGroup<TYPE ,CUDA> * WSs;
-protected:
-	MatGroup<TYPE ,CUDA> Ws;
-	MatGroup<TYPE ,CUDA> bestWs;
-	virtual void initWs(bool trainMod = true) = 0;
-	string path;
+	MatXG * WSs;
+	string machPath;	
+protected:	
 	dataSetBase<TYPE, CUDA> & dt;
 	int inputNum;
 	int outputNum;
+
+	string configName[100];
+	float configRecorder[100];
+	void initConfig();
+	MatXG Ws;
+	MatXG bestWs;
+
+	ofstream rcdFile;
+	timer rcdTimer;
+	void initSet(int configIdx, string name, float val);
+	virtual void setConfigValue(int idx, float val)= 0;
+	virtual void initConfigValue(){};
+	virtual void initWs(bool trainMod = true){};
+	
+
 	TYPE getValidLoss();
 	void save(bool finished = false);
 	void load(bool trainMod = true);
@@ -19,16 +31,18 @@ protected:
 	virtual void loadParameters(ifstream & fl){};
 	virtual void recordFileHead(){};
 	string binFileName(int idx = -1);
-	ofstream rcdFile;
-	timer rcdTimer;
+
 	virtual void train() = 0;
-	virtual void predict( MatriX<TYPE, CUDA> * _Y,  MatriX<TYPE, CUDA>* _X, int len = 1) = 0;	
+	virtual void predict( MatX * _Y,  MatX * _X, int len = 1) = 0;	
+	//void loadBatch(int size);
 public:
-	void wholeValidsResult(string _path);	
-	MachineBase(dataSetBase<TYPE, CUDA> & dtSet);
+	
+	MachineBase(dataSetBase<TYPE, CUDA> & dtSet, string path);
 	~MachineBase();
-	void trainRun(string _path);
+	void trainRun();
+	void wholeValidsResult();	
 	void initPredict();
-	void Predict(MatriX<TYPE, CUDA> * _Y, MatriX<TYPE, CUDA>* _X, int seriesLen = 1);
-	virtual void trainSet(int con, float val) = 0;	
+	void Predict(MatX * _Y, MatX * _X, int seriesLen = 1);
+	void operator ()(string s, float val);	
+	void showConfigSetting();
 };

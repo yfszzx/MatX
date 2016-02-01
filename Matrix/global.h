@@ -8,7 +8,6 @@ namespace matrixGlobal{
 		cout << "\nat line:" << line << "  file:" << file <<endl;
 		string s;
 		cin >> s;
-		exit(0);
 	}
 
 	namespace cpu_funcs{

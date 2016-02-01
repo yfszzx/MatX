@@ -26,7 +26,7 @@ int searchTool<TYPE, CUDA>::wolfe_powell_judge(){
 	return ret;
 }
 template <typename TYPE, bool CUDA>
-bool searchTool<TYPE, CUDA>::momentum_grad(MatGroup<TYPE, CUDA> &Ws,const MatGroup<TYPE, CUDA> &Grad, double loss){
+bool searchTool<TYPE, CUDA>::momentum_grad(MatXG &Ws,const MatXG &Grad, double loss){
 	if(startFlag){
 		lastGrad = Grad;
 		lastGrad = 0;
@@ -43,7 +43,7 @@ bool searchTool<TYPE, CUDA>::momentum_grad(MatGroup<TYPE, CUDA> &Ws,const MatGro
 	return true;
 }
 template <typename TYPE, bool CUDA>
-void searchTool<TYPE, CUDA>::conjDirect(MatGroup<TYPE, CUDA> &Ws,const MatGroup<TYPE, CUDA> &Grad, bool searchOver){
+void searchTool<TYPE, CUDA>::conjDirect(MatXG &Ws,const MatXG &Grad, bool searchOver){
 	if(startFlag){
 		lastNorm = Grad.norm();
 		lastGrad = Grad;
@@ -70,7 +70,7 @@ void searchTool<TYPE, CUDA>::conjDirect(MatGroup<TYPE, CUDA> &Ws,const MatGroup<
 
 }
 template <typename TYPE, bool CUDA>
-void searchTool<TYPE, CUDA>::LbfgsDirect(MatGroup<TYPE, CUDA> &Ws,const MatGroup<TYPE, CUDA> &Grad, bool searchOver){
+void searchTool<TYPE, CUDA>::LbfgsDirect(MatXG &Ws,const MatXG &Grad, bool searchOver){
 	if(startFlag || !searchOver){
 		Deriv = - Grad.norm();
 		direct = Grad/Deriv;
@@ -97,7 +97,7 @@ void searchTool<TYPE, CUDA>::LbfgsDirect(MatGroup<TYPE, CUDA> &Ws,const MatGroup
 	L_s[ll] = Ws - Pos;
 	L_y[ll] = Grad - lastGrad;
 	L_ro[ll] = L_s[ll].dot(L_y[ll]);
-	MatGroup<TYPE, CUDA> tmp = Grad;
+	MatXG tmp = Grad;
 	for(int i = l - 1; i >= 0;i--){		
 		L_alf[i] = L_s[i].dot(tmp)/L_ro[i];
 		tmp -= TYPE(L_alf[i]) * L_y[i];
@@ -113,7 +113,7 @@ void searchTool<TYPE, CUDA>::LbfgsDirect(MatGroup<TYPE, CUDA> &Ws,const MatGroup
 	lastGrad = Grad;
 }
 template <typename TYPE, bool CUDA>
-void searchTool<TYPE, CUDA>::init_pos(MatGroup<TYPE, CUDA> &Ws,const MatGroup<TYPE, CUDA> &Grad, double loss, bool searchOver = true){
+void searchTool<TYPE, CUDA>::init_pos(MatXG &Ws,const MatXG &Grad, double loss, bool searchOver = true){
 	
 	moveCount = 0;	
 	if(!searchOver){
@@ -140,7 +140,7 @@ void searchTool<TYPE, CUDA>::init_pos(MatGroup<TYPE, CUDA> &Ws,const MatGroup<TY
 	minPos = 0;
 }
 template <typename TYPE, bool CUDA>
-bool searchTool<TYPE, CUDA>::line_search(MatGroup<TYPE, CUDA> &Ws,const MatGroup<TYPE, CUDA> &Grad, double loss){
+bool searchTool<TYPE, CUDA>::line_search(MatXG &Ws,const MatXG &Grad, double loss){
 	double x=0;
 	if(overFlag){
 		init_pos(Ws, Grad, loss);		
@@ -241,7 +241,7 @@ bool searchTool<TYPE, CUDA>::notable(){
 	return notableFlag;
 };
 template <typename TYPE, bool CUDA>
-bool searchTool<TYPE, CUDA>::move(MatGroup<TYPE, CUDA> &Ws,const MatGroup<TYPE, CUDA> &Grad, double loss, bool randBatch){
+bool searchTool<TYPE, CUDA>::move(MatXG &Ws,const MatXG &Grad, double loss, bool randBatch){
 	notableFlag = true;
 	if(randBatch){
 		if(startFlag){
@@ -304,8 +304,8 @@ void searchTool<TYPE, CUDA>::L_init(int num){
 	L_ro = new double[L_num];
 	memset(L_alf, 0, _msize(L_alf));
 	memset(L_ro, 0, _msize(L_ro));
-	L_s =new MatGroup<TYPE, CUDA>[L_num];
-	L_y =new MatGroup<TYPE, CUDA>[L_num];
+	L_s =new MatXG[L_num];
+	L_y =new MatXG[L_num];
 	changeBatch();
 	L_count = 0;
 };

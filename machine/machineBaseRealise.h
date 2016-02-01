@@ -4,7 +4,7 @@ string MachineBase< TYPE, CUDA>::binFileName(int idx){
 		idx = dt.validFoldIdx;
 	}
 	stringstream nm;
-	nm<<path<<"machine_"<<idx<<".bin";
+	nm<<machPath<<"machine_"<<idx<<".bin";
 	return nm.str();
 }
 template <typename TYPE, bool CUDA>
@@ -13,7 +13,7 @@ void MachineBase< TYPE, CUDA>::trainInit(){
 	Ws.clear();
 	initWs();
 	bestWs = Ws;
-	string rcdFl = path + "recorder.csv";
+	string rcdFl = machPath + "recorder.csv";
 	if(fileIsExist(binFileName())){
 		rcdFile.open(rcdFl, ios::app);
 		rcdFile<<"[continue]"<<endl;	
@@ -29,14 +29,13 @@ void MachineBase< TYPE, CUDA>::trainInit(){
 
 }
 template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::trainRun(string _path){
-	path = _path;
+void MachineBase< TYPE, CUDA>::trainRun(){
 	for(int i = 0; i< dt.crossFolds; i++){
-		dt.makeValid(i);
+		dt.makeValid(i);		
 		if(overedFile()){
 			continue;
 		}
-		trainInit();		
+		trainInit();	
 		train();
 		save(true);
 		rcdFile.close();
@@ -89,10 +88,9 @@ void MachineBase< TYPE, CUDA>::load(bool trainMod){
 }
 
 template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::wholeValidsResult(string _path){
-	path = _path;
-	MatGroup<TYPE, CUDA> validT;
-	MatGroup<TYPE, CUDA> validY;
+void MachineBase< TYPE, CUDA>::wholeValidsResult(){	
+	vector<MatX> rcdT;
+	vector<MatX> rcdY;
 	for(int i = 0; i< dt.crossFolds; i++){
 		dt.makeValid(i);
 		if(!fileIsExist(binFileName())){
@@ -104,15 +102,18 @@ void MachineBase< TYPE, CUDA>::wholeValidsResult(string _path){
 		dt.showResult();
 		int num = 0;
 		for(int j = dt.preLen; j<dt.seriesLen; j++){
-			validT<<dt.Tv[j];
-			validY<<dt.Yv[j];
+			rcdT.push_back(dt.Tv[j]);
+			rcdY.push_back(dt.Yv[j]);
 			num += dt.Tv[j].size();		
 		}			
 		cout<<"\tsamples num:"<<num;
 	}
+	MatXG validT(rcdT.data(), rcdT.size());
+	MatXG validY(rcdY.data(), rcdY.size());
 	cout<<"\n\nWhole data set:";
 	cout<<"\nLoss:"<<(validT - validY).squaredNorm()/validT.size()/validT.MSE();
 	cout<<"\tsamples num:"<<validT.size();
+
 	dt.showValidsResult(validT, validY);
 };
 
@@ -126,10 +127,21 @@ TYPE MachineBase< TYPE, CUDA>::getValidLoss(){
 	return ls/dt.validNum/(dt.seriesLen - dt.preLen)/2;
 };
 template <typename TYPE, bool CUDA>
-MachineBase< TYPE, CUDA>::MachineBase(dataSetBase<TYPE, CUDA> & dtSet):dt(dtSet){
+MachineBase< TYPE, CUDA>::MachineBase(dataSetBase<TYPE, CUDA> & dtSet, string path):dt(dtSet){
 	WSs = NULL;
 	inputNum = dt.inputNum;
 	outputNum = dt.outputNum;
+	machPath = path;
+};
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::initConfig(){
+	initConfigValue();
+};
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::initSet(int configIdx, string name, float val){
+	configName[configIdx] = name;
+	configRecorder[configIdx]= val;
+	setConfigValue(configIdx, val);
 };
 template <typename TYPE, bool CUDA>
 MachineBase< TYPE, CUDA>::~MachineBase(){
@@ -165,3 +177,63 @@ void MachineBase< TYPE, CUDA>::Predict(MatriX<TYPE, CUDA> * _Y, MatriX<TYPE, CUD
 		WSs[i] = Ws;
 	}
 };
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::operator ()(string s, float val){
+	int idx = -1;
+	for(int i = 0; i<100; i++){
+		if(configName[i]==s){
+			idx = i;
+			break;
+		}
+	}
+	if(idx == -1){
+		cout<<"\n没有找到参数"<<s;
+	}
+	setConfigValue(idx, val);
+};
+
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::showConfigSetting(){
+	for(int i = 0; i < 100; i ++){
+		if(configName[i].size() > 0){
+			cout<<"\n["<<i<<"]"<<configName[i]<<"\t"<<configRecorder[i];
+		}		
+	}
+};/*
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::loadBatch(int size){
+	dt.makeBatch(size);
+	dt.loadBatch();
+}*/
+template <typename TYPE, bool CUDA>
+void * ANNBase<TYPE, CUDA>::threadTrain( void * _this){
+	((ANNBase<TYPE, CUDA> *)_this)->train();
+	return NULL;
+}
+template <typename TYPE, bool CUDA>
+void * ANNBase<TYPE, CUDA>::threadMakeBatch( void * _this){	
+	srand(time(NULL) + randSeeder);
+	dataSetBase<TYPE, CUDA> & dt = ((ANNBase<TYPE, CUDA> *)_this)->dt;
+	dt.makeBatch(((ANNBase<TYPE, CUDA> *)_this)->batchSizeControlar * dt.trainNum);
+	return NULL;
+}
+void MachineBase< TYPE, CUDA>::mainTrain(){
+	if(dt.randBatch){
+		dt.makeBatch();
+		do{
+			loadBatch();
+			pthread_t tid1, tid2;
+			void *ret1,*ret2;
+			pthread_create(&tid1, NULL, threadTrain, (void *)this);
+			pthread_create(&tid2, NULL, threadMakeData, (void *)this);
+			pthread_join(tid1, &ret1);
+			pthread_join(tid2, &ret2);
+		}
+
+	}else{
+		dt.makeBatch();
+		dt.loadBatch();
+		train();
+		train();
+	}
+}

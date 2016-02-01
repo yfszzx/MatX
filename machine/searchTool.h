@@ -3,11 +3,11 @@ class searchTool{
 private:
 	//search相关
 	enum Judge{OK = 0, LARGE = 1, SMALL = -1};
-	MatGroup<TYPE, CUDA> lastGrad;
-	MatGroup<TYPE, CUDA> direct;
-	MatGroup<TYPE, CUDA> lastDirect;
-	MatGroup<TYPE, CUDA> Pos;
-	MatGroup<TYPE, CUDA> lastPos;
+	MatXG lastGrad;
+	MatXG direct;
+	MatXG lastDirect;
+	MatXG Pos;
+	MatXG lastPos;
 	double Loss;
 	double Deriv;
 	double Loss_t;
@@ -24,17 +24,17 @@ private:
 	int count;
 	inline double interpolation(double x,double v0,double v1,double derv0,double derv1);
 	inline int wolfe_powell_judge();
-	bool momentum_grad(MatGroup<TYPE, CUDA> &Ws,const MatGroup<TYPE, CUDA> &Grad, double loss);
-	void init_pos(MatGroup<TYPE, CUDA> &Ws,const MatGroup<TYPE, CUDA> &Grad, double loss, bool searchOver = true);
-	bool line_search(MatGroup<TYPE, CUDA> &Ws,const MatGroup<TYPE, CUDA> &Grad, double loss);
-	void conjDirect(MatGroup<TYPE, CUDA> &Ws,const MatGroup<TYPE, CUDA> &Grad, bool searchOver);
-	void LbfgsDirect(MatGroup<TYPE, CUDA> &Ws,const MatGroup<TYPE, CUDA> &Grad, bool searchOver);
+	bool momentum_grad(MatXG &Ws,const MatXG &Grad, double loss);
+	void init_pos(MatXG &Ws,const MatXG &Grad, double loss, bool searchOver = true);
+	bool line_search(MatXG &Ws,const MatXG &Grad, double loss);
+	void conjDirect(MatXG &Ws,const MatXG &Grad, bool searchOver);
+	void LbfgsDirect(MatXG &Ws,const MatXG &Grad, bool searchOver);
 	
 	//LBFGS相关
 	double *L_alf;
 	double *L_ro;
-	MatGroup<TYPE, CUDA> *L_s;
-	MatGroup<TYPE, CUDA> *L_y;
+	MatXG *L_s;
+	MatXG *L_y;
 	int L_num;
 	int L_count;
 	void L_free();
@@ -43,7 +43,7 @@ private:
 	//统计loss的变化的显著性(Z)
 	int confirmRounds;
 	int recorderCount;
-	MatriX<float, false> lossRecorder;
+	MatCF lossRecorder;
 	float lossMean;
 	float lossMSE;
 	void recordLoss(float loss);
@@ -64,7 +64,7 @@ public:
 
 	//返回值
 	
-	MatGroup<TYPE, CUDA> overPos;	//线搜结束后的最佳结果
+	MatXG overPos;	//线搜结束后的最佳结果
 	int rounds();
 	void setRounds(int r);
 	inline bool notable();
@@ -74,7 +74,7 @@ public:
 	void setConfirmRounds(int n);
 	void setAlg(int alg, int LbfgsNum = 5);
 	void changeBatch();//更换batch时使用
-	bool move(MatGroup<TYPE, CUDA> &Ws,const MatGroup<TYPE, CUDA> &Grad, double loss, bool randBatch = true);	
+	bool move(MatXG &Ws,const MatXG &Grad, double loss, bool randBatch = true);	
 	searchTool();
 	~searchTool();
 };
