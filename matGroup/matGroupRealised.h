@@ -38,23 +38,6 @@ void MatGroup<TYPE, CUDA>::copy(const MatGroup<TYPE, CUDA> & m){
 }
 
 template <typename TYPE, bool CUDA >
-void MatGroup<TYPE, CUDA>::copyFix(const MatGroup<TYPE, CUDA> & m){
-	if(fixMemMat.size() != 0){
-		Assert("fixMat矩阵群不为空，不能设置为新的矩阵群");
-	}
-	matsNum = m.matsNum;
-	fixMat = true;
-	fixMemMat = MatriX<TYPE, CUDA>::Zero(m.fixMemMat.size(), 1);
-	cuWrap::memD2D(fixMemMat.dataPrt(), m.fixMemMat.dataPrt(), sizeof(TYPE) * fixMemMat.size());
-	mats = new MatriX<TYPE, CUDA> *[matsNum];
-	int pos = 0;
-	for(int i = 0; i< matsNum; i++){
-		mats[i]= new MatriX<TYPE, CUDA>(*m.mats[i], fixMemMat.dataPrt() + pos);
-		pos += m.mats[i]->size();
-	}
-
-}
-template <typename TYPE, bool CUDA >
 MatGroup<TYPE, CUDA>::MatGroup<TYPE, CUDA>(const MatGroup<TYPE, !CUDA> & m){	
 	selfSpace = true;
 	matsNum = m.matsNum;
@@ -69,12 +52,7 @@ template <typename TYPE, bool CUDA >
 MatGroup<TYPE, CUDA>::MatGroup<TYPE, CUDA>(const MatGroup<TYPE, CUDA> & m){	
 	fixMat = false;
 	selfSpace = true;
-	if(m.fixMat){
-		copyFix(m);
-
-	}else{
-		copy(m);
-	}
+	copy(m);
 }
 template <typename TYPE, bool CUDA >
 MatGroup<TYPE, CUDA>::MatGroup<TYPE, CUDA>(MatriX<TYPE, CUDA> * m, int num){
@@ -164,11 +142,7 @@ template <typename TYPE, bool CUDA >
 MatGroup<TYPE, CUDA> & MatGroup<TYPE, CUDA>::operator = (const MatGroup<TYPE, CUDA> & m){
 	if(matsNum == 0){
 		selfSpace = true;
-		if(m.fixMat){
-			copyFix(m);
-		}else{
-			copy(m);
-		}
+		copy(m);
 		return *this;
 	}
 

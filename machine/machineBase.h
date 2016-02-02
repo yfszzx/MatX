@@ -38,7 +38,6 @@ protected:
 	virtual void train() = 0;
 	virtual bool trainOperate() = 0;
 	virtual void predict( MatX * _Y,  MatX * _X, int len = 1) = 0;
-	void averageWs(MatXG & Wdest, const MatXG & src, int pastNum);	
 	ofstream rcdFile;	
 	timer rcdTimer;
 	float configRecorder[100];

@@ -20,8 +20,10 @@ ostream& operator <<(ostream &os, const MatriX<TYPE, CUDA> &m);
 template <typename TYPE, bool CUDA>
 class MatriX : public matCore<TYPE, CUDA> {
 	friend class MatriX<TYPE, !CUDA>;
-	friend matCore<TYPE, !CUDA>;
-	friend matCore<TYPE, CUDA>;
+	friend matCore<float, !CUDA>;
+	friend matCore<float, CUDA>;
+	friend matCore<double, !CUDA>;
+	friend matCore<double, CUDA>;
 	friend MatriX<TYPE, CUDA> operator * <TYPE, CUDA>(TYPE val, const MatriX<TYPE, CUDA> &m);
 	friend MatriX<TYPE, CUDA> operator + <TYPE, CUDA>(TYPE val, const MatriX<TYPE, CUDA> &m);
 	friend MatriX<TYPE, CUDA> operator - <TYPE, CUDA>(TYPE val, const MatriX<TYPE, CUDA> &m);
@@ -43,7 +45,6 @@ private:
 	MatriX(const MatriX<TYPE, CUDA> &m, operateType type);
 
 protected:
-	MatriX(const MatriX<TYPE, CUDA> &m, TYPE * prt);
 	//常用函数
 	inline MatriX & tanh();
 	inline MatriX & sigm();
@@ -52,12 +53,17 @@ protected:
 public:
 
 	MatriX(int _rows = 0, int _cols = 1);
-	MatriX(const MatriX<TYPE, CUDA> &m);
-	MatriX(const MatriX<TYPE, !CUDA> &m);
+	MatriX(const MatriX<double, CUDA> &m);
+	MatriX(const MatriX<double, !CUDA> &m);
+	MatriX(const MatriX<float, CUDA> &m);
+	MatriX(const MatriX<float, !CUDA> &m);
+
 
 	//复制
-	MatriX &  operator = (const MatriX<TYPE, CUDA> &m);
-	MatriX &  operator = (const MatriX<TYPE, !CUDA> &m);
+	MatriX &  operator = (const MatriX<double, CUDA> &m);
+	MatriX &  operator = (const MatriX<double, !CUDA> &m);
+	MatriX &  operator = (const MatriX<float, CUDA> &m);
+	MatriX &  operator = (const MatriX<float, !CUDA> &m);
 	MatriX & operator = (TYPE val);
 	MatriX & selfRandom();
 	static  MatriX<TYPE, CUDA> Random(int _rows, int  _cols = 1);
@@ -154,8 +160,8 @@ public:
 	void read(ifstream & fl);
 
 	//eigenvalue
-	MatriX<TYPE, false> eigenValues() const;
-	MatGroup<TYPE, CUDA> eigenSolver(MatriX<TYPE, false>& eigenVals) const;
+	MatriX<TYPE, CUDA> eigenValues() const;
+	MatriX<TYPE, CUDA> eigenSolver(MatriX<TYPE, CUDA>& eigenVals) const;
 	TYPE spectralRadius() const;
 };
 //fixMem矩阵的scale始终保持为1,且不能转置

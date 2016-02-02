@@ -13,7 +13,6 @@ matCore<TYPE, CUDA>::matCore(){
 	rowsNum = 0;
 	colsNum = 0;
 }
-
 template <typename TYPE, bool CUDA>
 matCore<TYPE, CUDA>::~matCore(){
 	free();
@@ -61,65 +60,137 @@ void matCore<TYPE, CUDA>::quoteLoad(const matMem<TYPE, CUDA> * m){
 	mem =  const_cast<matMem<TYPE, CUDA> *>(m);
 	mem->count ++;
 }
-template <typename TYPE, bool CUDA>
-void  matCore<TYPE, CUDA>::copy(const MatriX<TYPE, CUDA> &m){
-	if((void *)this == (void *)&m){
-		return ;
-	}
-	if(fix()){
-		if(rowsNum != m.realRows() || colsNum != m.realCols()){
-			Assert("fixMem的目标矩阵与输入矩阵维度不一致，无法复制");
-		}
-		load(m.mem);		
-	}else{
-		if(m.fix()){
-			init(m.rowsNum, m.colsNum);		
-			load(m.mem);
-		}else{
-			rowsNum = m.rowsNum;
-			colsNum = m.colsNum;
-			sizeNum = m.sizeNum;	
-			quoteLoad(m.mem);
-		}		
-	}
-	scale = m.scale;
-	transFlag = m.transFlag;	
-}
-template <typename TYPE, bool CUDA>
-void  matCore<TYPE, CUDA>::copy(const MatriX<TYPE, CUDA> &m, TYPE * prt){
-			rowsNum = m.rowsNum;
-			colsNum = m.colsNum;
-			sizeNum = m.sizeNum;
-			scale =m.scale;
-			transFlag = m.transFlag;
-			mem = new matMem<TYPE, CUDA>(prt);
-}
-template <typename TYPE, bool CUDA>
-void  matCore<TYPE, CUDA>::tmpcopy(const MatriX<TYPE, CUDA> &m){
+void  matCore<double, true>::copy(const MatriX<double, true> &m){
 	if((void *)this == (void *)&m){
 		return ;
 	}
 	rowsNum = m.rowsNum;
 	colsNum = m.colsNum;
 	sizeNum = m.sizeNum;	
-	quoteLoad(m.mem);
 	scale = m.scale;
 	transFlag = m.transFlag;	
+	quoteLoad(m.mem);
+
 }
-template <typename TYPE, bool CUDA>
-void  matCore<TYPE, CUDA>::copy(const MatriX<TYPE, !CUDA> &m){
-	if(fix()){
-		if(rowsNum != m.realRows() || colsNum != m.realCols()){
-			Assert("fixMem的目标矩阵与输入矩阵维度不一致，无法复制");
-		}		
-	}else{
-		init(m.rowsNum, m.colsNum);	
+void  matCore<float, true>::copy(const MatriX<float, true> &m){
+	if((void *)this == (void *)&m){
+		return ;
 	}
-	load(m.mem);
+	rowsNum = m.rowsNum;
+	colsNum = m.colsNum;
+	sizeNum = m.sizeNum;	
+	scale = m.scale;
+	transFlag = m.transFlag;	
+	quoteLoad(m.mem);
+
+}
+void  matCore<double, false>::copy(const MatriX<double, false> &m){
+	if((void *)this == (void *)&m){
+		return ;
+	}
+	rowsNum = m.rowsNum;
+	colsNum = m.colsNum;
+	sizeNum = m.sizeNum;	
+	scale = m.scale;
+	transFlag = m.transFlag;	
+	quoteLoad(m.mem);
+
+}
+
+void  matCore<float, false>::copy(const MatriX<float, false> &m){
+	if((void *)this == (void *)&m){
+		return ;
+	}
+	rowsNum = m.rowsNum;
+	colsNum = m.colsNum;
+	sizeNum = m.sizeNum;	
+	scale = m.scale;
+	transFlag = m.transFlag;	
+	quoteLoad(m.mem);
+
+}
+
+
+
+void  matCore<double, true>::copy(const MatriX<double, false> &m){
+	init(m.rowsNum, m.colsNum);	
+	load(m.mem->mem, false);
 	scale =m.scale;
 	transFlag = m.transFlag;
 
 }
+void  matCore<double, false>::copy(const MatriX<double, true> &m){
+	init(m.rowsNum, m.colsNum);	
+	load(m.mem->mem, true);
+	scale =m.scale;
+	transFlag = m.transFlag;
+
+}
+void  matCore<float, true>::copy(const MatriX<float, false> &m){
+	init(m.rowsNum, m.colsNum);	
+	load(m.mem->mem, false);
+	scale =m.scale;
+	transFlag = m.transFlag;
+
+}
+
+void  matCore<float, false>::copy(const MatriX<float, true> &m){
+	init(m.rowsNum, m.colsNum);	
+	load(m.mem->mem, true);
+	scale =m.scale;
+	transFlag = m.transFlag;
+
+}
+void  matCore<float, true>::copy(const MatriX<double, true> &m){
+	init(m.rowsNum, m.colsNum);	
+	load(m.mem->mem, true);
+	scale =m.scale;
+	transFlag = m.transFlag;
+}
+void  matCore<float, false>::copy(const MatriX<double, false> &m){
+	init(m.rowsNum, m.colsNum);	
+	load(m.mem->mem, false);
+	scale =m.scale;
+	transFlag = m.transFlag;
+}
+void  matCore<double, true>::copy(const MatriX<float, true> &m){
+	init(m.rowsNum, m.colsNum);	
+	load(m.mem->mem, true);
+	scale =m.scale;
+	transFlag = m.transFlag;
+}
+void  matCore<double, false>::copy(const MatriX<float, false> &m){
+	init(m.rowsNum, m.colsNum);	
+	load(m.mem->mem, false);
+	scale =m.scale;
+	transFlag = m.transFlag;
+}
+
+void  matCore<float, true>::copy(const MatriX<double, false> &m){
+	init(m.rowsNum, m.colsNum);	
+	load(m.mem->mem, false);
+	scale =m.scale;
+	transFlag = m.transFlag;
+}
+void  matCore<float, false>::copy(const MatriX<double, true> &m){
+	init(m.rowsNum, m.colsNum);	
+	load(m.mem->mem, true);
+	scale =m.scale;
+	transFlag = m.transFlag;
+}
+void  matCore<double, true>::copy(const MatriX<float, false> &m){
+	init(m.rowsNum, m.colsNum);	
+	load(m.mem->mem, false);
+	scale =m.scale;
+	transFlag = m.transFlag;
+}
+void  matCore<double, false>::copy(const MatriX<float, true> &m){
+	init(m.rowsNum, m.colsNum);	
+	load(m.mem->mem, true);
+	scale =m.scale;
+	transFlag = m.transFlag;
+}
+
 template <typename TYPE, bool CUDA>
 void matCore<TYPE, CUDA>::memRealise(){
 	if(!unique()){	
@@ -141,7 +212,7 @@ void matCore<TYPE, CUDA>::copyRealise(bool sclRealise, bool trnRealise){
 		matMem<TYPE, CUDA> *tMem = mem;
 		init(rowsNum, colsNum);
 		transFlag = tTrans;
-		load(tMem);
+		load(tMem->mem, CUDA);
 		scale = tScl;
 	}	
 	if(sclRealise){
@@ -152,32 +223,73 @@ void matCore<TYPE, CUDA>::copyRealise(bool sclRealise, bool trnRealise){
 	}
 }
 
-template <typename TYPE, bool CUDA>
-void matCore<TYPE, CUDA>::load(const TYPE * src, bool cuda = false){
+template<>
+void matCore<double, true>::load(const double * src, bool cuda = false){
 	if(cuda){
-		if(CUDA){
-			cuWrap::memD2D(dataPrt(), src, sizeof(TYPE) * size());
-		}else{
-			cuWrap::memD2H(dataPrt(), src, sizeof(TYPE) * size());
-		}
+		cuWrap::memD2D(dataPrt(), src, sizeof(double) * size());		
 	}else{
-		if(CUDA){
-			cuWrap::memH2D(dataPrt(), src, sizeof(TYPE) * size());
-		}else{
-			memcpy(dataPrt(), src, sizeof(TYPE) * size());
-		}
+		cuWrap::memH2D(dataPrt(), src, sizeof(double) * size());		
 	}
 }
-
-template <typename TYPE, bool CUDA>
-void matCore<TYPE, CUDA>::load(const matMem<TYPE, CUDA> *m){
-	load(m->mem, CUDA);
+template<>
+void matCore<double, false>::load(const double * src, bool cuda = false){
+	if(cuda){
+		cuWrap::memD2H(dataPrt(), src, sizeof(double) * size());
+	}else{
+		memcpy(dataPrt(), src, sizeof(double) * size());		
+	}
 }
-template <typename TYPE, bool CUDA>
-void matCore<TYPE, CUDA>::load(const matMem<TYPE, !CUDA> *m){
-	load(m->mem, !CUDA);
+template<>
+void matCore<float, true>::load(const float * src, bool cuda = false){
+	if(cuda){
+		cuWrap::memD2D(dataPrt(), src, sizeof(float) * size());		
+	}else{
+		cuWrap::memH2D(dataPrt(), src, sizeof(float) * size());		
+	}
 }
+template<>
+void matCore<float, false>::load(const float * src, bool cuda = false){
+	if(cuda){
+	
+			cuWrap::memD2H(dataPrt(), src, sizeof(float) * size());
+	}else{
+			memcpy(dataPrt(), src, sizeof(float) * size());	
+	}
+}
+template<>
+void matCore<double, false>::load(const float * src, bool cuda = false){
+	if(cuda){
+		cuWrap::memDf2Hd(dataPrt(), src, size());		
+	}else{
+		cuWrap::memHf2Hd(dataPrt(), src, size());	
+	}
+}
+template<>
+void matCore<float, false>::load(const double * src, bool cuda = false){
+	if(cuda){
+		cuWrap::memDd2Hf(dataPrt(), src, size());
+	}else{
+		cuWrap::memHd2Hf(dataPrt(), src, size());		
+	}
+}
+template<>
+void matCore<float, true>::load(const double * src, bool cuda = false){
+	if(cuda){
+		cuWrap::memDd2Df(dataPrt(), src, size());
+		
+	}else{
+		cuWrap::memHd2Df(dataPrt(), src, size());		
+	}
+}
+template<>
+void matCore<double, true>::load(const float * src, bool cuda = false){
+	if(cuda){
+		cuWrap::memDf2Dd(dataPrt(), src, size());
 
+	}else{
+		cuWrap::memHf2Dd(dataPrt(), src, size());		
+	}
+}
 template <typename TYPE, bool CUDA>
 int matCore<TYPE, CUDA>::cols() const{
 	if(transFlag){

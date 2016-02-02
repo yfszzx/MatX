@@ -1,6 +1,9 @@
 template <typename TYPE, bool CUDA>
 class  matCore{
-	friend matCore<TYPE, !CUDA>;	
+	friend matCore<double, CUDA>;
+	friend matCore<float, CUDA>;
+	friend matCore<double, !CUDA>;
+	friend matCore<float, !CUDA>;
 private:
 	matMem<TYPE, CUDA> * mem;
 	int rowsNum;
@@ -14,10 +17,9 @@ private:
 	inline void transposeRealise();
 	inline void scaleRealise();
 	inline void quoteLoad(const matMem<TYPE, CUDA> * m);
-	inline void load(const matMem<TYPE, CUDA> * m);
-	inline void load(const matMem<TYPE, !CUDA> * m);
-	inline void load(const TYPE * src, bool cuda);	
-	
+	inline void load(const float * src, bool cuda);	
+	inline void load(const double * src, bool cuda);	
+
 protected:
 	
 	TYPE scale;
@@ -33,9 +35,10 @@ protected:
 	 matCore();	 
 	~matCore();
 	void init(int rows, int cols);
-	inline void copy(const MatriX<TYPE, CUDA> &m);
-	inline void copy(const MatriX<TYPE, !CUDA> &m);
-	inline void copy(const MatriX<TYPE, CUDA> &m, TYPE * prt);
+	inline void copy(const MatriX<float, CUDA> &m);
+	inline void copy(const MatriX<float, !CUDA> &m);
+	inline void copy(const MatriX<double, CUDA> &m);
+	inline void copy(const MatriX<double, !CUDA> &m);
 	inline void tmpcopy(const MatriX<TYPE, CUDA> &m);
 	inline void memRealise();
 	inline void copyRealise(bool sclRealise, bool trnRealise = false);

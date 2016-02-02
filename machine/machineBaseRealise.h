@@ -185,11 +185,6 @@ void * MachineBase<TYPE, CUDA>::threadMakeBatch( void * _this){
 	return NULL;
 }
 template <typename TYPE, bool CUDA>
-void  MachineBase<TYPE, CUDA>::averageWs(MatXG & Wdest, const  MatXG & Wsrc, int pastNum){
-	Wdest *= TYPE(pastNum)/(pastNum + 1);
-	Wdest += Wsrc/TYPE(pastNum + 1);
-}
-template <typename TYPE, bool CUDA>
 void MachineBase<TYPE, CUDA>::kbPause(){	
 	if(_kbhit()){
 		char s = getchar();

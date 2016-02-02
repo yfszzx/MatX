@@ -1,39 +1,38 @@
 template <typename TYPE, bool CUDA>
-MatriX<TYPE, false> MatriX<TYPE, CUDA>::eigenValues() const{
+MatriX<TYPE, CUDA> MatriX<TYPE, CUDA>::eigenValues() const{
 	if(rows() != cols()){
 		Assert("矩阵不是方阵，不能求解特征值");
 	}
-	MatriX<TYPE, false> ret(rows());
-	MatriX<TYPE, false> tmp(*this);
+	MatriX<TYPE, CUDA> ret(rows());
+	MatriX<TYPE, CUDA> tmp(*this);
 	tmp.copyRealise(true, true);
 	SelfAdjointEigenSolver<eigenMat> es(tmp.eMat()); 
 	if (es.info() != Eigen::Success) {  
 		cout<<"\n求解特征值失败";
-		return MatriX<TYPE, false>::Zero(0,0);
+		return MatriX<TYPE, CUDA>::Zero(0,0);
 	}
 	ret.loadMat(es.eigenvalues().data());
 	return ret;
 
 };
 template <typename TYPE, bool CUDA>
-MatGroup<TYPE, CUDA> MatriX<TYPE, CUDA>::eigenSolver( MatriX<TYPE, false>& eigenVals) const{
+MatriX<TYPE, CUDA> MatriX<TYPE, CUDA>::eigenSolver( MatriX<TYPE, CUDA>& eigenVals) const{
 	if(rows() != cols()){
 		Assert("矩阵不是方阵，不能求解特征值");
 	}
-	MatGroup<TYPE, CUDA> ret;
-
-	MatriX<TYPE, false> tmp(*this);
+	MatriX<TYPE, CUDA> ret(rows(),rows());
+	MatriX<TYPE, CUDA> tmp(*this);
 	tmp.copyRealise(true, true);
 	SelfAdjointEigenSolver<eigenMat> es(tmp.eMat()); 
 	if (es.info() != Eigen::Success) {  
 		cout<<"\n求解特征值失败";
-		eigenVals = MatriX<TYPE, false>::Zero(0);
+		eigenVals = MatriX<TYPE, CUDA>::Zero(0);
 
 	}else{
-		eigenVals = MatriX<TYPE, false>::Zero(rows());
+		eigenVals = MatriX<TYPE, CUDA>::Zero(rows());
 	}
-
-	memcpy(ret.dataPrt(), es.eigenvalues().data(), sizeof(TYPE) * rows());
+	eigenVals.loadMat(es.eigenvalues().data());
+	ret.loadMat(es.eigenvectors().data());
 	return ret;
 };
 template <typename TYPE, bool CUDA>

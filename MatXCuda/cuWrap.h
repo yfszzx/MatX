@@ -6,6 +6,14 @@ namespace cuWrap{
 	 void memD2H(void  *dest, const void  *src, size_t size);
 	 void memH2D(void *dest, const void *src, size_t size);
 	 void memD2D(void *dest, const void *src, size_t size);
+	 void memDf2Hd(double  *dest, const float  *src, int size);
+	 void memHf2Dd(double *dest, const float *src, int size);
+	 void memDf2Dd(double *dest, const float *src, int size);
+	 void memHf2Hd(double *dest, const float *src, int size);
+	 void memDd2Hf(float  *dest, const double  *src,int size);
+	 void memHd2Df(float *dest, const double *src, int size);
+	 void memDd2Df(float *dest, const double *src, int size);
+	 void memHd2Hf(float *dest, const double *src, int size);
 	 void fill(float *p, float value, int len);
 	 void fill(double *p, double value, int len);
 	 void scale(float *p, float scl, int len);

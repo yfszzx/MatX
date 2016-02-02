@@ -9,7 +9,6 @@ private:
 	bool fixMat;
 	
 	void copy(const MatGroup<TYPE, CUDA> & m);
-	void copyFix(const MatGroup<TYPE, CUDA> & m);
 	void memFree();
 public:
 	MatGroup();

@@ -3,14 +3,60 @@ template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA>::MatriX(int _rows,int _cols){
 	init(_rows, _cols);
 }
-template <typename TYPE, bool CUDA>
-MatriX< TYPE, CUDA>::MatriX(const MatriX<TYPE,CUDA> &m){
+
+
+MatriX< double, true>::MatriX(const MatriX<double, true> &m){
 	copy(m);
 }
-template <typename TYPE, bool CUDA>
-MatriX< TYPE, CUDA>::MatriX(const MatriX<TYPE,!CUDA> &m){
+MatriX< float, true>::MatriX(const MatriX<float, true> &m){
 	copy(m);
 }
+MatriX< double, false>::MatriX(const MatriX<double, false> &m){
+	copy(m);
+}
+MatriX< float, false>::MatriX(const MatriX<float, false> &m){
+	copy(m);
+}
+
+MatriX< double, true>::MatriX(const MatriX<double, false> &m){
+	copy(m);
+}
+MatriX< float, true>::MatriX(const MatriX<float, false> &m){
+	copy(m);
+}
+MatriX< double, false>::MatriX(const MatriX<double, true> &m){
+	copy(m);
+}
+MatriX< float, false>::MatriX(const MatriX<float , true> &m){
+	copy(m);
+}
+
+
+MatriX< float , true>::MatriX(const MatriX<double, true> &m){
+	copy(m);
+}
+MatriX< double , true>::MatriX(const MatriX<float, true> &m){
+	copy(m);
+}
+MatriX< float , true>::MatriX(const MatriX<double, false> &m){
+	copy(m);
+}
+MatriX< double , true>::MatriX(const MatriX<float, false> &m){
+	copy(m);
+}
+MatriX< float , false>::MatriX(const MatriX<double, false> &m){
+	copy(m);
+}
+MatriX< double , false>::MatriX(const MatriX<float, false> &m){
+	copy(m);
+}
+MatriX< float , false>::MatriX(const MatriX<double, true> &m){
+	copy(m);
+}
+MatriX< double , false>::MatriX(const MatriX<float, true> &m){
+	copy(m);
+}
+
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA>::MatriX(const MatriX<TYPE, CUDA> &m, operateType OPT){
 		copy(m);
@@ -29,18 +75,72 @@ MatriX< TYPE, CUDA>::MatriX(const MatriX<TYPE, CUDA> &m, operateType OPT){
 			break;
 		}
 }
-template <typename TYPE, bool CUDA>
-MatriX< TYPE, CUDA>::MatriX(const MatriX<TYPE, CUDA> &m, TYPE * prt){
-	copy(m, prt);	
-}
+
 //¸³Öµº¯Êý
-template <typename TYPE, bool CUDA>
-MatriX< TYPE, CUDA> & MatriX< TYPE,CUDA>::operator = (const MatriX< TYPE, CUDA> &m){
+MatriX< double, true> & MatriX<  double,true>::operator = (const MatriX<  double, true> &m){
 	copy(m);
 	return *this;
 }
-template <typename TYPE, bool CUDA>
-MatriX< TYPE, CUDA> & MatriX< TYPE,CUDA>::operator = (const MatriX< TYPE, !CUDA> &m){
+MatriX< float, true> & MatriX< float,true>::operator = (const MatriX< float, true> &m){
+	copy(m);
+	return *this;
+}
+MatriX<  double, true> & MatriX<  double,true>::operator = (const MatriX<  double, false> &m){
+	copy(m);
+	return *this;
+}
+MatriX< float, true> & MatriX< float,true>::operator = (const MatriX< float, false> &m){
+	copy(m);
+	return *this;
+}
+MatriX<  double, false> & MatriX<  double,false>::operator = (const MatriX<  double, false> &m){
+	copy(m);
+	return *this;
+}
+MatriX< float, false> & MatriX< float,false>::operator = (const MatriX< float, false> &m){
+	copy(m);
+	return *this;
+}
+MatriX<  double, false> & MatriX<  double,false>::operator = (const MatriX<  double, true> &m){
+	copy(m);
+	return *this;
+}
+MatriX< float, false> & MatriX< float,false>::operator = (const MatriX< float, true> &m){
+	copy(m);
+	return *this;
+}
+
+
+
+MatriX< double, false> & MatriX< double,false>::operator = (const MatriX< float, false> &m){
+	copy(m);
+	return *this;
+}
+MatriX< float,false> & MatriX< float,false>::operator = (const MatriX< double, false> &m){
+	copy(m);
+	return *this;
+}
+MatriX< double, false> & MatriX< double,false>::operator = (const MatriX< float, true> &m){
+	copy(m);
+	return *this;
+}
+MatriX< float, false> & MatriX< float,false>::operator = (const MatriX< double, true> &m){
+	copy(m);
+	return *this;
+}
+MatriX< double, true> & MatriX< double,true>::operator = (const MatriX< float, true> &m){
+	copy(m);
+	return *this;
+}
+MatriX< float, true> & MatriX< float,true>::operator = (const MatriX< double, true> &m){
+	copy(m);
+	return *this;
+}
+MatriX< double, true> & MatriX< double,true>::operator = (const MatriX< float, false> &m){
+	copy(m);
+	return *this;
+}
+MatriX< float, true> & MatriX< float,true>::operator = (const MatriX< double, false> &m){
 	copy(m);
 	return *this;
 }

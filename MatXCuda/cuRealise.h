@@ -66,6 +66,16 @@ namespace gpu_funcs{
 			return (x != y)?1:0;
 		}  
 	};
+	struct flt2dbl{  
+		__device__ double operator ()(const float & x) const {  
+			return double(x);
+		}  
+	};
+	struct dbl2flt {  
+		__device__ float operator ()(const double & x) const {  
+			return float(x);
+		}  
+	};
 }
 
 namespace cuda_params{
@@ -162,6 +172,47 @@ void cuWrap::memH2D(void *to, const void *from, size_t size){
 void cuWrap::memD2D(void *to, const void *from, size_t size){
 	cudaMemcpy(to, from, size, cudaMemcpyDeviceToDevice);
 	CUDA_CHECK;
+};
+void cuWrap::memDf2Hd(double  *dest, const float  *src, int size){
+	double * tmp;
+	cuWrap::malloc((void **)& tmp, sizeof(double) * size);
+	cuWrap::memDf2Dd(tmp, src, size);
+	cuWrap::memD2H(dest, tmp, sizeof(double) * size);
+	cuWrap::free(tmp);
+};
+void cuWrap::memHf2Dd(double *dest, const float *src, int size){
+	float * tmp;
+	cuWrap::malloc((void **)& tmp, sizeof(float) * size);
+	cuWrap::memH2D(tmp, src, sizeof(float) * size);
+	cuWrap::memDf2Dd(dest, tmp, size);	
+	cuWrap::free(tmp);
+
+};
+void cuWrap::memDf2Dd(double *dest, const float *src, int size){
+	thrust :: device_ptr <float > s ( const_cast<float *>(src) ); 
+	thrust :: device_ptr <double > d ( dest); 
+	thrust::transform(s, s + size , d, gpu_funcs::flt2dbl());
+};
+void cuWrap::memDd2Hf(float  *dest, const double  *src,int size){
+	float * tmp;
+	cuWrap::malloc((void **)& tmp, sizeof(float) * size);
+	cuWrap::memDd2Df(tmp, src, size);
+	cuWrap::memD2D(dest, tmp, sizeof(float) * size);
+	cuWrap::free(tmp);
+
+};
+void cuWrap::memHd2Df(float *dest, const double *src, int size){
+	double * tmp;
+	cuWrap::malloc((void **)& tmp, sizeof(double) * size);
+	cuWrap::memH2D(tmp, src, sizeof(double) * size);
+	cuWrap::memDd2Df(dest, tmp, size);	
+	cuWrap::free(tmp);
+
+};
+void cuWrap::memDd2Df(float *dest, const double *src, int size){
+	thrust :: device_ptr <double > s ( const_cast<double *>(src) ); 
+	thrust :: device_ptr <float > d ( dest); 
+	thrust::transform(s, s + size , d, gpu_funcs::dbl2flt());
 };
 void cuWrap::scale(float *p, float scl, int len){
 	CUBLAS_CHECK(cublasSscal(cublasHandle, len, &scl, p, 1));

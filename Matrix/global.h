@@ -12,44 +12,50 @@ namespace matrixGlobal{
 
 	namespace cpu_funcs{
 		template <typename TYPE>
-		TYPE sigm(TYPE x){
+		TYPE sigm(const TYPE x){
 			return 1.0f/(1.0f+expf(-x));
 		}
 		template <typename TYPE>
-		TYPE square(TYPE x){
+		TYPE square(const TYPE x){
 			return x*x;
 		}
 		template <typename TYPE>
-		TYPE tanh(TYPE x){
+		TYPE tanh(const TYPE x){
 			return 1.0f-2.0f/(1.0f+ expf(2*x));
 		}
 		template <typename TYPE>
-		TYPE abs(TYPE x){			
+		TYPE abs(const TYPE x){			
 			return (x>0)?x:(-x);
 		}
 		template <typename TYPE>
-		TYPE Gre(TYPE x, TYPE y){
+		TYPE Gre(const TYPE x, const TYPE y){
 			return TYPE(x > y);
 		}
 		template <typename TYPE>
-		TYPE GreEqu(TYPE x, TYPE y){
+		TYPE GreEqu(const TYPE x, const TYPE y){
 			return TYPE(x >= y);
 		}
 		template <typename TYPE>
-		TYPE Les(TYPE x, TYPE y){
+		TYPE Les(const TYPE x, const TYPE y){
 			return TYPE(x < y);
 		}
 		template <typename TYPE>
-		TYPE LesEqu(TYPE x, TYPE y){
+		TYPE LesEqu(const TYPE x,const  TYPE y){
 			return TYPE(x <= y);
 		}
 		template <typename TYPE>
-		TYPE Equ(TYPE x, TYPE y){
+		TYPE Equ(const TYPE x,const  TYPE y){
 			return TYPE(x == y);
 		}
 		template <typename TYPE>
-		TYPE NotEqu(TYPE x, TYPE y){
+		TYPE NotEqu(const TYPE x, const TYPE y){
 			return TYPE(x != y);
+		}
+		float flt2dbl(const double x){
+			return float(x);
+		}
+		double dbl2flt(const float x){
+			return double(x);
 		}
 
 	}
@@ -99,9 +105,22 @@ typedef Matrix<double, -1, -1> eMatD;
 
 #define MatX MatriX<TYPE, CUDA>
 #define MatXG MatGroup<TYPE, CUDA>
-#define MatXN MatriX<TYPE, !CUDA>
-#define MatXNG MatGroup<TYPE, !CUDA>
+#define MatXF MatriX<float, CUDA>
+#define MatXD MatriX<double, CUDA>
+#define MatXG MatGroup<TYPE, CUDA>
+#define MatXFG MatriX<float, CUDA>
+#define MatXDG MatriX<double, CUDA>
 #define eigenMat Matrix<TYPE, -1, -1>
 
 #define Assert(illu) Global_Assert((illu), __LINE__, __FILE__);
 #define Debug(x) cout<<endl<<(x);Global_debug( __LINE__, __FILE__);
+
+
+void cuWrap::memHf2Hd(double *dest, const float *src, int size){
+	std::transform(src, src + size, dest, cpu_funcs::flt2dbl);
+}
+void cuWrap::memHd2Hf(float *dest, const double *src, int size){
+	std::transform(src, src + size, dest, cpu_funcs::dbl2flt);
+
+}
+
