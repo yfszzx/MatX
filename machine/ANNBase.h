@@ -21,9 +21,6 @@ private:
 	void step();
 	void annealControll();
 	void threadsTasks();
-	static void * threadStep( void * _this);
-	static void * threadMakeBatch( void * _this);
-	void loadBatch();
 	void showAndRecord();	
 	bool stepRecord();	
 	bool finish();
@@ -34,20 +31,21 @@ protected:
 	double loss;
 	double dataLoss;
 	string annConfigName[100];
-	virtual void initWs(bool trainMod = true);
 	virtual void saveParameters(ofstream & fl);
 	virtual void loadParameters(ifstream & fl);
 	virtual void recordFileHead();
 	virtual int getBatchSize();
-	virtual bool trainOperate();
-	virtual void train();
+	virtual void trainHead();
+	virtual void trainCore();
+	virtual bool trainAssist();
 	void initConfigValue();
 	void setConfigValue(int idx, float val);
-	void annInitConfig();
+	void annInitConfig(){};
 	virtual void annInitConfigValue() = 0;
 	virtual void annSetConfigValue(int idx, float val) = 0;
-	virtual void annInitWs(bool trainMod) = 0;
-	virtual void predict( MatX * _Y,  MatX* _X, int len = 1) = 0;
+	virtual void initMachine() = 0;
+	virtual void predictCore( MatX * _Y,  MatX* _X, int len = 1) = 0;
+	virtual void annTrainHead() = 0;
 	virtual void forward() = 0;
 	virtual void backward() = 0;
 public:

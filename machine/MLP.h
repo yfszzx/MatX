@@ -31,19 +31,20 @@ protected:
 			break;
 		}
 	}
-	virtual void annInitWs(bool trainMod = true){
+	virtual void initMachine(){
 		Win =  MatX::Random(inputNum, nodes)/100;
 		Wout =  MatX::Random(nodes, outputNum)/100;
 		Bin =  MatX::Random(1, nodes)/100;
 		Bout =  MatX::Random(1, outputNum)/100;
-		Ws<<Win<<Wout<<Bin<<Bout;
-		if(trainMod){
+		Mach<<Win<<Wout<<Bin<<Bout;
+	}
+	virtual void predictCore( MatX * _Y, MatX * _X, int len = 1) {
+		_Y[0] = activeFunc(dt.actFunc, tanh(_X[0] * Win + Bin) * Wout + Bout);	
+	}
+	virtual void annTrainHead(){
 		grads.clear();
 		grads<<grad_in<<grad_out<<grad_Bin<<grad_Bout;
-		}
-	}
-	virtual void predict( MatX * _Y, MatX * _X, int len = 1) {
-		_Y[0] = activeFunc(dt.actFunc, tanh(_X[0] * Win + Bin) * Wout + Bout);	
+
 	}
 	virtual void forward(){
 		hide = tanh(dt.X[0] * Win + Bin);

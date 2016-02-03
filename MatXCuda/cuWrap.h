@@ -1,5 +1,4 @@
 namespace cuWrap{
-
 	void initCuda(bool showGpuInfo);
 	 void malloc(void ** p, size_t size);
 	 void free(void * p);
@@ -14,6 +13,7 @@ namespace cuWrap{
 	 void memHd2Df(float *dest, const double *src, int size);
 	 void memDd2Df(float *dest, const double *src, int size);
 	 void memHd2Hf(float *dest, const double *src, int size);
+	 void plusFloatMat(double *dest, double sclD, const float *src, float sclS, int size);
 	 void fill(float *p, float value, int len);
 	 void fill(double *p, double value, int len);
 	 void scale(float *p, float scl, int len);
@@ -39,6 +39,10 @@ namespace cuWrap{
 	 void transpose(int src_row, int src_col,  double *mat,  int size);
 	 void product(float *A,  float *B, float *C, int size);
 	 void product(double *A, double *B, double *C, int size);
+	 void quotient(float *A,  float *B, float *C, int size);
+	 void quotient(double *A, double *B, double *C, int size);
+	 void cwiseInverse(float *dest, float *src, int size);
+	 void cwiseInverse(double *dest, double *src, int size);
 	 float dot(float *A,  float *B, int size);
 	 double dot( double *A, double *B, int size);
 	 void sigm(double *A, int len);
@@ -77,4 +81,5 @@ namespace cuWrap{
 	 void Equ(double *dest,const  double * x, const double *y, int len);
 	 void NotEqu(float *dest,const  float * x, const float *y, int len);
 	 void NotEqu(double *dest,const  double * x, const double *y, int len);	
+	 
 };

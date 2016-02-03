@@ -27,15 +27,13 @@ void ANNBase<TYPE, CUDA>::recordFileHead(){
 	rcdFile<<"rounds,data_loss,valid_loss,min_loss,batchTrainRound,batchSize,Z,time"<<endl;	
 };
 template <typename TYPE, bool CUDA>
-void ANNBase<TYPE, CUDA>::initWs(bool trainMod){
-	if(trainMod){
+void ANNBase<TYPE, CUDA>::trainHead(){
 		minValidLoss = 0;
 		trainLoss = 0;
 		batchTrainRounds = initBatchTrainRounds;
 		batchSizeControlar = initBatchSize;
-		Search.reset();
-	}	
-	annInitWs(trainMod);
+		Search.reset();	
+		annTrainHead();
 };
 template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::setConfigValue(int idx, float val){
@@ -127,7 +125,7 @@ int ANNBase<TYPE, CUDA>::getBatchSize(){
 	return batchSizeControlar * dt.trainNum;
 }
 template <typename TYPE, bool CUDA>
-void ANNBase<TYPE, CUDA>::train(){		
+void ANNBase<TYPE, CUDA>::trainCore(){		
 	int cnt = 0;
 	do{	
 		step();				
@@ -146,10 +144,9 @@ void ANNBase<TYPE, CUDA>::train(){
 	
 }
 template <typename TYPE, bool CUDA>
-bool ANNBase<TYPE, CUDA>::trainOperate(){
+bool ANNBase<TYPE, CUDA>::trainAssist(){
 	kbPause();	
-	stepRecord();		
-	
+	stepRecord();			
 	Search.changeBatch();	
 	if(finish()){
 		return true;

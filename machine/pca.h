@@ -2,7 +2,15 @@ template <typename TYPE, bool CUDA>
 class ELM:public MachineBase<TYPE, CUDA>{	
 private:	
 	MatX means;
+	MatX var;
+	MatX covMat;
+	MatX eigenVals;
+	MatX eigenVects;
 	MatX transMat;
+
+	MatXD meansD;
+	MatXD varD;
+	MatX covMatD;
 	TYPE regOut;
 	int nodes;
 	int trainRounds;
@@ -38,11 +46,11 @@ protected:
 	virtual void initWs(bool trainMod = true){
 		//means = MatX::Random(inputNum, nodes);
 		//Wout =  MatX::Zero(nodes + 1, outputNum);
-		Ws<<means<<transMat;
+		Ws<<means<<var<<covMat<<transMat;
 	};
 	virtual void predict( MatX * _Y,  MatX* _X, int len = 1){
 		MatX ones = MatX::Ones(_X[0].rows());
-		_Y[0] = (_X - means) * transMat;
+		_Y[0] = (_X[0] - means) * transMat;
 	};
 	virtual int getBatchSize(){
 		return dt.trainNum  * batchScale;
@@ -52,20 +60,33 @@ public:
 		initConfig();		
 	};
 	virtual void train(){
-		if(trainCount < trainRounds){
-			means += dt.X[0].sum();
-
-		}else if(trainCount < 2 *trainRounds){
-			var += (dt.X[0] - means).norm2();
-		}else if(trainCount < 3 * trainRounds){
-			cov += (dt.X[0] - means) *  (dt.X[0] - means).T();
-		}
+		var = dt.X[0].MSE(means);
+		MatX tmp = (dt.X[0] - means).cwiseProduct(var.cwiseInverse());
+		covMat = tmp.rankUpdate();
 	}
 	virtual bool trainOperate(){
+		if(trainCount == 0){
+			meansD = means;
+			varD = var;
+			covMatD = covMat;
+		}else{
+			meansD.plusFloatMat(means);
+			varD.plusFloatMat(var);
+			covMatD.plusFloatMat(covMat);
+		}
+		
+		
 		cout<<"\ndataLoss"<<(dt.Y[0] -dt.T[0]).squaredNorm()/batchSize/2/batchInitLoss;
 		averageWs(bestWs, Ws, trainCount);
 		cout<<"\nLoss:"<<getValidLoss()/dt.validInitLoss;
 		dt.showResult();
 		return !( trainCount < trainRounds);
 	};
+	virtual void trainFinal(){
+			means = meansD/trainRounds;
+			var = varD/trainRounds;
+			covMat = covMatD/trainRounds;
+			eigenVects = covMat.eigenSolver(eigenVals);
+		}
+	}
 };

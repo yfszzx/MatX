@@ -24,6 +24,8 @@ class MatriX : public matCore<TYPE, CUDA> {
 	friend matCore<float, CUDA>;
 	friend matCore<double, !CUDA>;
 	friend matCore<double, CUDA>;
+	friend MatriX<double, CUDA>;
+	friend MatriX<float, CUDA>;
 	friend MatriX<TYPE, CUDA> operator * <TYPE, CUDA>(TYPE val, const MatriX<TYPE, CUDA> &m);
 	friend MatriX<TYPE, CUDA> operator + <TYPE, CUDA>(TYPE val, const MatriX<TYPE, CUDA> &m);
 	friend MatriX<TYPE, CUDA> operator - <TYPE, CUDA>(TYPE val, const MatriX<TYPE, CUDA> &m);
@@ -97,10 +99,12 @@ public:
 	MatriX cwiseProduct(const MatriX<TYPE, CUDA> &mat) const;
 	MatriX cwiseQuotient(const MatriX<TYPE, CUDA> &mat) const;
 	MatriX cwiseInverse() const;
-	inline TYPE dot(const MatriX<TYPE, CUDA> &mat) const;
+	MatriX rankUpdate() const;
+	inline TYPE dot(const MatriX<TYPE, CUDA> &mat) const;	
 	inline MatriX inverse() const;
 	inline MatriX inv() const;
-
+	inline MatriX & add(const MatriX<float, CUDA> &mat);
+	inline MatriX & add(const MatriX<double, CUDA> &mat);
 
 	MatriX<TYPE, CUDA> operator > (const MatriX<TYPE, CUDA> & m)  const;
 	MatriX<TYPE, CUDA> operator < (const MatriX<TYPE, CUDA> & m)  const;

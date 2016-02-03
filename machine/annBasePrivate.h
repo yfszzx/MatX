@@ -3,7 +3,7 @@ void ANNBase<TYPE, CUDA>::step(){
 	do{		
 		forward();			
 		backward();			
-	}while(!Search.move(Ws, grads, loss, dt.randBatch));	
+	}while(!Search.move(Mach, grads, loss, dt.randBatch));	
 }
 template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::annealControll(){
@@ -45,7 +45,7 @@ bool ANNBase<TYPE, CUDA>::stepRecord(){
 		validLoss = getValidLoss()/dt.validInitLoss;
 		if(minValidLoss == 0 || minValidLoss > validLoss){
 			minValidLoss = validLoss;
-			bestWs = Ws;
+			setBestMach(Mach);
 		}
 		showAndRecord();
 	}

@@ -57,6 +57,15 @@ namespace matrixGlobal{
 		double dbl2flt(const float x){
 			return double(x);
 		}
+		struct plusFloatMat{
+			const double sclD;
+			const float sclS;
+			plusFloatMat(double D, float S):sclD(D),sclS(S){};
+			double operator()(const double x, const float y){
+				return x * sclD + double(y * sclS);
+			}		
+		};
+		
 
 	}
 	const bool randDebug = false;

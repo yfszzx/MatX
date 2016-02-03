@@ -51,11 +51,6 @@ MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::operator * (const MatriX<TYPE, CUDA> &ma
 		Assert("矩阵维度不匹配,无法进行乘法运算");	
 	}
 	if(CUDA){
-		/*
-		TYPE *tmp = mat.dataPrt();
-		TYPE *tmp2 = ret.dataPrt();
-		TYPE *tmp3 = dataPrt();
-		*/
 		cuWrap::gemm(trans(), mat.trans(), rRow, rCol, joint, dataPrt(), mat.dataPrt(), ret.dataPrt(), mScale);
 	}else{
 		if(!trans()){
@@ -81,14 +76,14 @@ MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseProduct (const MatriX<TYPE, CUDA> &
 	}
 	MatriX<TYPE, CUDA> ret(mat, STR);
 	if(CUDA){
-			if(!(trans()^mat.trans())){
+			if(trans() == mat.trans()){
 				cuWrap::product( mat.dataPrt(), dataPrt(), ret.dataPrt(), size());
 			}else{
 				MatriX<TYPE, CUDA> tmp(mat.transpose(), TRN);
 				cuWrap::product( tmp.dataPrt(), dataPrt(), ret.dataPrt(), size());
 			}
 	}else{
-		if(!(trans()^mat.trans())){
+		if(trans() == mat.trans()){
 			ret.eMat() =  eMat().cwiseProduct(mat.eMat());			
 		}else{
 			ret.eMat() =  eMat().cwiseProduct(mat.eMat().transpose());				
@@ -96,6 +91,53 @@ MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseProduct (const MatriX<TYPE, CUDA> &
 	}
 	ret.scale =  mat.scale * scale;
 	ret.setTrans(trans());
+	return ret;
+}
+template <typename TYPE, bool CUDA>
+MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseQuotient (const MatriX<TYPE, CUDA> &mat) const{
+	if(mat.size() != size()){
+		Assert("矩阵大小不匹配,无法进行cwiseProduct运算");	
+	}
+	MatriX<TYPE, CUDA> ret(mat, STR);
+	if(CUDA){
+		if(trans() == mat.trans()){
+			cuWrap::quotient( mat.dataPrt(), dataPrt(), ret.dataPrt(), size());
+		}else{
+			MatriX<TYPE, CUDA> tmp(mat.T(), TRN);
+			cuWrap::quotient( tmp.dataPrt(), dataPrt(), ret.dataPrt(), size());
+		}
+	}else{
+		if(trans() == mat.trans()){
+			ret.eMat() =  eMat().cwiseQuotient(mat.eMat());			
+		}else{
+			ret.eMat() =  eMat().cwiseQuotient(mat.eMat().transpose());				
+		}
+	}
+	ret.scale =   scale / mat.scale;
+	ret.setTrans(trans());
+	return ret;
+}
+template <typename TYPE, bool CUDA>
+MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseInverse () const{
+	MatriX<TYPE, CUDA> ret(mat, STR);
+	if(CUDA){
+		cuWrap::cwiseInverse(ret.dataPrt(), dataPrt(), size());
+	}else{
+		ret.eMat() =  eMat().cwiseInverse();					
+	}
+	ret.scale = 1.0f/scale;
+	ret.setTrans(trans());
+	return ret;
+}
+template <typename TYPE, bool CUDA>
+MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::rankUpdate() const{
+	MatriX<TYPE, CUDA> ret = MatriX< TYPE, CUDA>::Zero(rows(), rows());
+	if(CUDA){
+
+	}else{
+		ret.eMat() = ret.eMat().selfadjointView<Eigen::Upper>().rankUpdate(eMat());
+	}
+	ret.scale = scale * scale;
 	return ret;
 }
 template <typename TYPE, bool CUDA>
@@ -137,13 +179,46 @@ MatriX< TYPE, CUDA>& MatriX< TYPE,CUDA>::operator += (const MatriX<TYPE,CUDA> &m
 	if(CUDA){
 		cuWrap::plus(false, mat.trans()!= trans(), realRows(), realCols(), dataPrt(), mat.dataPrt(), dataPrt(), scale, mat.scale);
 	}else{
-		if(!(trans()^mat.trans())){
+		if(trans() == mat.trans()){
 				eMat() = eMat() * scale +  mat.eMat() * mat.scale;			
 		}else{
 				eMat() = eMat() * scale + mat.eMat().transpose() * mat.scale;
 		}
 	}
 	scale = 1;
+	return *this;
+};
+template <typename TYPE, bool CUDA>
+MatriX< TYPE, CUDA>& MatriX< TYPE,CUDA>::add(const MatriX<float,CUDA> &mat){
+	if(sizeof(TYPE) == sizeof(float)){
+		*this += mat;
+		return *this;
+	}else{
+		if(CUDA){
+			if(trans() == mat.trans()){
+				cuWrap::plusFloatMat(dataPrt(), scale, mat.dataPrt(), mat.scale, size());
+			}else{
+				MatriX<TYPE, CUDA> tmp(mat.T(), TRN);
+				cuWrap::plusFloatMat(dataPrt(), scale, tmp.dataPrt(), tmp.scale, size());
+			}
+		}else{
+			if(trans() == mat.trans()){
+				std::transform(dataPrt(), dataPrt() + size(), mat.dataPrt(), dataPrt(), cpu_funcs::plusFloatMat(scale, mat.scale));				
+			}else{
+				MatriX<TYPE, CUDA> tmp(mat.T(), TRN);
+				std::transform(dataPrt(), dataPrt() + size(), tmp.dataPrt(), dataPrt(), cpu_funcs::plusFloatMat(scale, tmp.scale));	
+			}
+
+		}
+		scale = 1;
+		return *this;
+	}
+	
+};
+template <typename TYPE, bool CUDA>
+MatriX< TYPE, CUDA>& MatriX< TYPE,CUDA>::add(const MatriX<double,CUDA> &mat){
+	MatriX< TYPE, CUDA> tmp = mat;
+	*this += mat;
 	return *this;
 };
 template <typename TYPE, bool CUDA>

@@ -13,7 +13,7 @@ protected:
 		initSet(0, "nodes",100);
 		initSet(1, "regOut",0);
 		initSet(2, "trainRounds",20);
-		initSet(3, "batchSize",0.5);
+		initSet(3, "batchScale",0.5);
 	};
 	virtual void setConfigValue(int idx, float val){
 		switch(idx){
@@ -31,24 +31,21 @@ protected:
 			break;
 		}
 	};
-	virtual void initWs(bool trainMod = true){
+	virtual void initMachine(){
 		Win = MatX::Random(inputNum, nodes);
 		Wout =  MatX::Zero(nodes + 1, outputNum);
 		Woutd = Wout;
-		Ws<<Win<<Wout;
+		Mach<<Win<<Wout;
 	};
-	virtual void predict( MatX * _Y,  MatX* _X, int len = 1){
+	virtual void predictCore( MatX * _Y,  MatX* _X, int len = 1){
 		MatX ones = MatX::Ones(_X[0].rows());
 		_Y[0] = tanh(_X[0] * Win).colJoint(ones) * Wout;
 	};
 	virtual int getBatchSize(){
 		return dt.trainNum  * batchScale;
 	}
-public:
-	ELM(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){
-		initConfig();		
-	};
-	virtual void train(){
+	virtual void trainHead(){};
+	virtual void trainCore(){
 		MatX I = MatX::Identity(nodes + 1);	
 		MatX A;
 		MatX ones = MatX::Ones(dt.X[0].rows());
@@ -56,15 +53,22 @@ public:
 		A = I * regOut + hide.T() * hide;
 		Wout = A.inv() * hide.T() * dt.T[0];
 		dt.Y[0] = hide * Wout;
-	
+
 	}
-	virtual bool trainOperate(){
-		cout<<"\ndataLoss"<<(dt.Y[0] -dt.T[0]).squaredNorm()/batchSize/2/batchInitLoss;
-		MatXD tmp = Wout;
-		Woutd += tmp;
-		bestWs[1] = Woutd/(trainCount + 1);
+	virtual bool trainAssist(){
+		Woutd << Wout;		
+		cout<<"\ndataLoss"<<(dt.Y[0] -dt.T[0]).squaredNorm()/batchSize/2/batchInitLoss;		
 		cout<<"\nLoss:"<<getValidLoss()/dt.validInitLoss;
 		dt.showResult();
 		return !( trainCount < trainRounds);
 	};
+	virtual void trainTail(){
+		Wout = Woutd/trainRounds;
+		setBestMach(Mach);
+	}
+public:
+	ELM(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){
+		initConfig();		
+	};
+	
 };

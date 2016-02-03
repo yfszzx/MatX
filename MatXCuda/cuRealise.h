@@ -25,6 +25,18 @@ namespace gpu_funcs{
 		}  
 	};
 	template <typename TYPE>
+	struct quotient {  
+		__device__ TYPE operator ()(const  TYPE & x, const TYPE & y) const {  
+			return x/y; 
+		}  
+	};
+	template <typename TYPE>
+	struct cwiseInverse {  
+		__device__ TYPE operator ()(const  TYPE & x) const {  
+			return 1/x; 
+		}  
+	};
+	template <typename TYPE>
 	struct absf {  
 		__device__ TYPE operator ()(const  TYPE & x) const {  
 			return (x>0)?x:(-x); 
@@ -74,6 +86,14 @@ namespace gpu_funcs{
 	struct dbl2flt {  
 		__device__ float operator ()(const double & x) const {  
 			return float(x);
+		}  
+	};
+	struct plusFloatMat {  
+		const double sclD;
+		const float sclS;
+		plusFloatMat(double D, float S):sclD(D),sclS(S){};
+		__host__ __device__ double operator ()(const double & dest, const float & src ) const {  
+			return dest * sclD + (double)src *sclS;
 		}  
 	};
 }
@@ -197,7 +217,7 @@ void cuWrap::memDd2Hf(float  *dest, const double  *src,int size){
 	float * tmp;
 	cuWrap::malloc((void **)& tmp, sizeof(float) * size);
 	cuWrap::memDd2Df(tmp, src, size);
-	cuWrap::memD2D(dest, tmp, sizeof(float) * size);
+	cuWrap::memD2H(dest, tmp, sizeof(float) * size);
 	cuWrap::free(tmp);
 
 };
@@ -214,11 +234,16 @@ void cuWrap::memDd2Df(float *dest, const double *src, int size){
 	thrust :: device_ptr <float > d ( dest); 
 	thrust::transform(s, s + size , d, gpu_funcs::dbl2flt());
 };
+void cuWrap::scale(double *p, double scl, int len){
+	CUBLAS_CHECK(cublasDscal(cublasHandle, len, &scl, p, 1));
+};
 void cuWrap::scale(float *p, float scl, int len){
 	CUBLAS_CHECK(cublasSscal(cublasHandle, len, &scl, p, 1));
 };
-void cuWrap::scale(double *p, double scl, int len){
-	CUBLAS_CHECK(cublasDscal(cublasHandle, len, &scl, p, 1));
+void cuWrap::plusFloatMat(double *dest, double sclD, const float *src, float sclS, int size){
+	thrust :: device_ptr <float > s ( const_cast<float *>(src) ); 
+	thrust :: device_ptr <double > d ( dest); 
+	thrust::transform(d, d + size , s, d, gpu_funcs::plusFloatMat(sclD, sclS));
 };
 void cuWrap::copy(int len, float *x, int incx, float * y, int incy){
 	CUBLAS_CHECK(cublasScopy(cublasHandle, len, x, incx, y, incy));
@@ -294,6 +319,29 @@ void cuWrap::product(double *A,  double *B, double * ret, int size){
 	thrust :: device_ptr <double > b ( B ); 
 	thrust :: device_ptr <double > r (ret ); 
 	thrust::transform(a, a + size , b, r, gpu_funcs::product<double>());
+};
+void cuWrap::quotient(float *A, float *B, float *ret, int size){
+	thrust :: device_ptr <float > a ( A ); 
+	thrust :: device_ptr <float > b ( B ); 
+	thrust :: device_ptr <float > r (ret ); 
+	thrust::transform(a, a + size , b, r, gpu_funcs::quotient<float>());
+};
+void cuWrap::quotient(double *A,  double *B, double * ret, int size){
+	thrust :: device_ptr <double > a ( A ); 
+	thrust :: device_ptr <double > b ( B ); 
+	thrust :: device_ptr <double > r (ret ); 
+	thrust::transform(a, a + size , b, r, gpu_funcs::quotient<double>());
+};
+void cuWrap::cwiseInverse(float *dest, float *src, int size){
+	thrust :: device_ptr <float > d ( dest ); 
+	thrust :: device_ptr <float > s ( src ); 
+	thrust::transform(s, s + size , d, gpu_funcs::cwiseInverse<float>());
+};
+void cuWrap::cwiseInverse(double *dest, double *src, int size){
+	thrust :: device_ptr <double > d ( dest ); 
+	thrust :: device_ptr <double > s ( src ); 
+	thrust::transform(s, s + size , d, gpu_funcs::cwiseInverse<double>());
+
 };
 float cuWrap::dot(float *A, float *B, int size){
 	float ret;
