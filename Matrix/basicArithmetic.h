@@ -1,42 +1,36 @@
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> & MatriX< TYPE,CUDA>::operator *= (const TYPE val){
 	scale *= val;
-	if(fix()){
-		copyRealise(true);
-	}
 	return *this;
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> & MatriX< TYPE,CUDA>::operator /= (const TYPE val){
 	scale /= val;
-	if(fix()){
-		copyRealise(true);
-	}
 	return *this;
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::operator + (const TYPE val) const{
-	MatriX< TYPE,CUDA> tmp(*this, STR);
+	MatriX< TYPE,CUDA> tmp(*this, STRU);
 	tmp = val;
 	return *this + tmp;
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> & MatriX< TYPE,CUDA>::operator += (const TYPE val){
-	MatriX<TYPE, CUDA> tmp(*this, STR);
+	MatriX<TYPE, CUDA> tmp(*this, STRU);
 	tmp = val;
 	*this += tmp;
 	return *this;
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> & MatriX< TYPE,CUDA>::operator -= (const TYPE val){
-	MatriX< TYPE,CUDA> tmp(*this, STR);
+	MatriX< TYPE,CUDA> tmp(*this, STRU);
 	tmp = val;
 	*this -= tmp;
 	return *this;
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::operator - (const TYPE val) const{
-	MatriX< TYPE,CUDA> tmp(*this, STR);
+	MatriX< TYPE,CUDA> tmp(*this, STRU);
 	tmp = val;
 	return *this - tmp;
 }
@@ -74,12 +68,13 @@ MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseProduct (const MatriX<TYPE, CUDA> &
 	if(mat.size() != size()){
 		Assert("矩阵大小不匹配,无法进行cwiseProduct运算");	
 	}
-	MatriX<TYPE, CUDA> ret(mat, STR);
+	MatriX<TYPE, CUDA> ret(realRows(), realCols());
+	ret.setTrans(trans());
 	if(CUDA){
 			if(trans() == mat.trans()){
 				cuWrap::product( mat.dataPrt(), dataPrt(), ret.dataPrt(), size());
 			}else{
-				MatriX<TYPE, CUDA> tmp(mat.transpose(), TRN);
+				MatriX<TYPE, CUDA> tmp(mat, TURN);
 				cuWrap::product( tmp.dataPrt(), dataPrt(), ret.dataPrt(), size());
 			}
 	}else{
@@ -89,8 +84,7 @@ MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseProduct (const MatriX<TYPE, CUDA> &
 			ret.eMat() =  eMat().cwiseProduct(mat.eMat().transpose());				
 		}
 	}
-	ret.scale =  mat.scale * scale;
-	ret.setTrans(trans());
+	ret.scale =  mat.scale * scale;	
 	return ret;
 }
 template <typename TYPE, bool CUDA>
@@ -98,13 +92,14 @@ MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseQuotient (const MatriX<TYPE, CUDA> 
 	if(mat.size() != size()){
 		Assert("矩阵大小不匹配,无法进行cwiseProduct运算");	
 	}
-	MatriX<TYPE, CUDA> ret(mat, STR);
+	MatriX<TYPE, CUDA> ret(realRows(), realCols());
+	ret.setTrans(trans());
 	if(CUDA){
 		if(trans() == mat.trans()){
-			cuWrap::quotient( mat.dataPrt(), dataPrt(), ret.dataPrt(), size());
+			cuWrap::quotient(dataPrt(),  mat.dataPrt(), ret.dataPrt(), size());
 		}else{
-			MatriX<TYPE, CUDA> tmp(mat.T(), TRN);
-			cuWrap::quotient( tmp.dataPrt(), dataPrt(), ret.dataPrt(), size());
+			MatriX<TYPE, CUDA> tmp(mat, TURN);
+			cuWrap::quotient(dataPrt(), tmp.dataPrt(), ret.dataPrt(), size());
 		}
 	}else{
 		if(trans() == mat.trans()){
@@ -114,19 +109,18 @@ MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseQuotient (const MatriX<TYPE, CUDA> 
 		}
 	}
 	ret.scale =   scale / mat.scale;
-	ret.setTrans(trans());
 	return ret;
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseInverse () const{
-	MatriX<TYPE, CUDA> ret(*this, STR);
+	MatriX<TYPE, CUDA> ret(realRows(), realCols());
+	ret.setTrans(trans());
 	if(CUDA){
 		cuWrap::cwiseInverse(ret.dataPrt(), dataPrt(), size());
 	}else{
 		ret.eMat() =  eMat().cwiseInverse();					
 	}
 	ret.scale = 1.0f/scale;
-	ret.setTrans(trans());
 	return ret;
 }
 template <typename TYPE, bool CUDA>
@@ -142,27 +136,27 @@ MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::rankUpdate() const{
 }
 template <typename TYPE, bool CUDA>
 TYPE MatriX< TYPE,CUDA>::dot(const MatriX<TYPE, CUDA> &mat) const{
-	MatriX<TYPE, CUDA> tmp(this->cwiseProduct(mat), QUO);
+	MatriX<TYPE, CUDA> tmp = this->cwiseProduct(mat);
 	return tmp.allSum();
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::operator + (const MatriX<TYPE, CUDA> &mat) const{
 	if(scale == 0){
-		MatriX<TYPE,CUDA> ret(mat, QUO);
+		MatriX<TYPE,CUDA> ret = mat;
 		return ret;
 	}
-	MatriX<TYPE,CUDA> ret(*this, QUO);
+	MatriX<TYPE,CUDA> ret = *this;
 	ret += mat;
 	return ret;
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::operator - (const MatriX<TYPE, CUDA> &mat) const{
 	if(scale == 0){
-		MatriX<TYPE,CUDA> ret(mat, QUO);
+		MatriX<TYPE,CUDA> ret = mat;
 		ret *= -1;
 		return ret;
 	}
-	MatriX<TYPE,CUDA> ret(*this, QUO);
+	MatriX<TYPE,CUDA> ret = *this;
 	ret -= mat;
 	return ret;
 }
@@ -198,16 +192,16 @@ MatriX< TYPE, CUDA>& MatriX< TYPE,CUDA>::add(const MatriX<float,CUDA> &mat){
 			if(trans() == mat.trans()){
 				cuWrap::plusFloatMat(dataPrt(), scale, mat.dataPrt(), mat.scale, size());
 			}else{
-				MatriX<float, CUDA> tmp = mat.T();
-				tmp.copyRealise(false, true);
+				MatriX<float, CUDA> tmp = mat;
+				tmp.transMem();
 				cuWrap::plusFloatMat(dataPrt(), scale, tmp.dataPrt(), tmp.scale, size());
 			}
 		}else{
 			if(trans() == mat.trans()){
 				std::transform(dataPrt(), dataPrt() + size(), mat.dataPrt(), dataPrt(), cpu_funcs::plusFloatMat(scale, mat.scale));				
 			}else{
-				MatriX<float, CUDA> tmp = mat.T();
-				tmp.copyRealise(false, true);
+				MatriX<float, CUDA> tmp = mat;
+				tmp.transMem();
 				std::transform(dataPrt(), dataPrt() + size(), tmp.dataPrt(), dataPrt(), cpu_funcs::plusFloatMat(scale, tmp.scale));	
 			}
 
@@ -220,7 +214,7 @@ MatriX< TYPE, CUDA>& MatriX< TYPE,CUDA>::add(const MatriX<float,CUDA> &mat){
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA>& MatriX< TYPE,CUDA>::add(const MatriX<double,CUDA> &mat){
 	MatriX< TYPE, CUDA> tmp = mat;
-	*this += mat;
+	*this += tmp;
 	return *this;
 };
 template <typename TYPE, bool CUDA>
@@ -230,43 +224,43 @@ MatriX< TYPE, CUDA>& MatriX< TYPE,CUDA>::operator -= (const MatriX<TYPE,CUDA> &m
 };
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::operator * (const TYPE val) const{
-	MatriX<TYPE,CUDA> ret(*this, QUO);
+	MatriX<TYPE,CUDA> ret = *this;
 	ret *= val;
 	return ret;
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::operator / (const TYPE val) const{
-	MatriX<TYPE,CUDA> ret(*this, QUO);
+	MatriX<TYPE,CUDA> ret = *this;
 	ret /= val;
 	return ret;
 }
 template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> operator * (TYPE val ,const MatriX<TYPE,CUDA> &m){
-	MatriX<TYPE,CUDA> ret(m, MatriX< TYPE,CUDA>::QUO);
+	MatriX<TYPE,CUDA> ret = m;
 	ret *= val;
 	return ret;
 };
 template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> operator + (TYPE val ,const MatriX<TYPE,CUDA> &m){
-	MatriX<TYPE,CUDA> ret(m, MatriX< TYPE,CUDA>::QUO);
+	MatriX<TYPE,CUDA> ret = m;
 	ret = val;
 	return ret + m;
 };
 template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> operator - (TYPE val ,const MatriX<TYPE,CUDA> &m){
-	MatriX<TYPE,CUDA>  ret(m, MatriX< TYPE,CUDA>::QUO);
+	MatriX<TYPE,CUDA>  ret = m;
 	ret = val;
 	return ret - m;
 };
 template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> operator -(const MatriX<TYPE,CUDA> &m){
-	MatriX<TYPE,CUDA> ret(m * (-1), MatriX< TYPE,CUDA>::QUO);
+	MatriX<TYPE,CUDA> ret = m * (-1);
 	return ret;
 }
 
 template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> MatriX<TYPE,CUDA>::T() const{
-	MatriX<TYPE,CUDA> ret(*this, QUO);
+	MatriX<TYPE,CUDA> ret = *this;
 	ret.setTrans();
 	return ret;
 };
@@ -282,13 +276,13 @@ template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> MatriX<TYPE,CUDA>::inv() const{
 	MatriX<TYPE, CUDA> ret = *this;
 	ret.copyRealise(false, false);
-	if(!CUDA){		
-		ret.eMat() = ret.eMat().inverse();		
-	}else{
+	if(CUDA){		
 		eigenMat tmp(realRows(), realCols());
 		cuWrap::memD2H(tmp.data(), dataPrt(), sizeof(TYPE) * size());
 		tmp = tmp.inverse();
-		cuWrap::memH2D(ret.dataPrt(), tmp.data(), sizeof(TYPE) * size());
+		cuWrap::memH2D(ret.dataPrt(), tmp.data(), sizeof(TYPE) * size());	
+	}else{
+		ret.eMat() = ret.eMat().inverse();	
 	}
 	ret. scale = 1/ret.scale;
 	return ret;

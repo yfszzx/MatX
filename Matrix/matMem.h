@@ -5,9 +5,7 @@ public:
 	TYPE * mem;
 	eigenMat *eigenMem; 
 	int count;
-	bool fixMem;
 	matMem();
-	matMem(TYPE * src);
 	matMem(int rows, int cols);
 	~ matMem();	
 };

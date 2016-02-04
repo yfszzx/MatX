@@ -9,10 +9,9 @@ private:
 	int rowsNum;
 	int colsNum;
 	int sizeNum;	
-	bool transFlag;
-		
+	bool transFlag;		
 	void free();	
-	inline bool unique() const;
+	inline bool unique() const;	
 	
 	inline void transposeRealise();
 	inline void scaleRealise();
@@ -20,8 +19,7 @@ private:
 	inline void load(const float * src, bool cuda);	
 	inline void load(const double * src, bool cuda);	
 
-protected:
-	
+protected:	
 	TYPE scale;
 	inline eigenMat eMat() const;
 	inline eigenMat & eMat();
@@ -32,6 +30,8 @@ protected:
 	inline bool trans() const;
 	inline void setTrans();
 	inline void setTrans(bool flag);
+	inline bool isVect() const;
+	inline void transMem();
 	 matCore();	 
 	~matCore();
 	void init(int rows, int cols);
@@ -42,17 +42,12 @@ protected:
 	inline void tmpcopy(const MatriX<TYPE, CUDA> &m);
 	inline void memRealise();
 	inline void copyRealise(bool sclRealise, bool trnRealise = false);
-	inline bool fix() const;	
 	inline void loadMat(const TYPE * src, bool cuda = false);
-	void setFix(TYPE * prt);
-	void fixFree();
+	string str() const;
 	
 public:	
 	int cols() const;
 	int rows() const;
 	int size() const;	
-	string str() const;
-	//TYPE * data();
-	
 };
 

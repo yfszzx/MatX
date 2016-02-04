@@ -83,5 +83,10 @@ namespace cuWrap{
 	 void Equ(double *dest,const  double * x, const double *y, int len);
 	 void NotEqu(float *dest,const  float * x, const float *y, int len);
 	 void NotEqu(double *dest,const  double * x, const double *y, int len);	
+	 void Identity(float * dest, int rows, int cols);
+	 void Identity(double * dest, int rows, int cols);
+	 void diagonal(float * dest, const float * src, int size);
+	 void diagonal(double * dest, const double * src, int size);
+
 	 
 };

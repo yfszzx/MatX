@@ -329,7 +329,6 @@ void MatGroup<TYPE, CUDA>::setFix(){
 		fixMemMat = MatriX<TYPE, CUDA>::Zero(size(),1);
 		int pos = 0;
 		for(int i = 0; i< matsNum; i++){
-			mats[i]->setFix(fixMemMat.dataPrt() + pos);
 			pos += mats[i]->size();
 		}
 		fixMat = true;
@@ -339,7 +338,7 @@ template <typename TYPE, bool CUDA >
 void MatGroup<TYPE, CUDA>::fixFree(){
 	if(fixMat){
 		for(int i = 0; i< matsNum; i++){
-			mats[i]->fixFree();			
+				
 		}
 		fixMemMat = MatriX<TYPE, CUDA>::Zero(0,0);
 		fixMat = false;

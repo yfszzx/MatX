@@ -40,8 +40,8 @@ class MatriX : public matCore<TYPE, CUDA> {
 	friend MatriX<TYPE, CUDA> operator - <TYPE, CUDA>(const MatriX<TYPE, CUDA> &m);
 	friend MatGroup<TYPE, CUDA>;
 private:
-	enum operateType { QUO = 0, STR = 1, CON = 2, TRN = 3, SCL = 4, ALL = 5 };
-	//QUT 引用; STR 开辟空间，拷贝结构;  CON 完全拷贝; TRN 拷贝，若tranFlag == true 则实现转置; SCL 拷贝并实现scale; ALL 联合执行 TRN 和SCL
+	enum operateType { STRU = 1, CON = 2, TRAN = 3, SCL = 4, ALL = 5 ,TURN = 6};
+	//STRU 开辟空间，拷贝结构;  CON 完全拷贝; TRAN 拷贝，若tranFlag == true 则实现转置; SCL 拷贝并实现scale; ALL 联合执行 TRAN 和SCL;TURN 将矩阵内存转置,外观不变
 	static bool sortCmp(int a, int b);
 	void removeMapping(vector<int> & map, int * list, const int n, const int remove_num) const;
 	inline int elementPos(int rows, int cols) const;
@@ -78,13 +78,14 @@ public:
 	static  MatriX<TYPE, CUDA> Zero(int _rows, int  _cols = 1);
 	static  MatriX<TYPE, CUDA> Identity(int rows, int cols = 0);
 	static  MatriX<TYPE, CUDA> eye(int rows, int cols = 0);
+	static  MatriX<TYPE, CUDA> Diagonal(const  MatriX<TYPE, CUDA> & mat);
 	inline MatriX<TYPE, CUDA> & assignment(int row, int col, TYPE val);
 	inline MatriX<TYPE, CUDA> & assignment(int idx, TYPE val);
+	
 
 
 
 	//基本运算
-	//所有非const的函数,返回的矩阵若为fixMem,必须将scale归一，transpose实现
 	inline MatriX transpose() const;
 	inline MatriX T() const;
 	inline MatriX operator * (const MatriX<TYPE, CUDA> &mat) const;
@@ -103,7 +104,8 @@ public:
 	MatriX cwiseProduct(const MatriX<TYPE, CUDA> &mat) const;
 	MatriX cwiseQuotient(const MatriX<TYPE, CUDA> &mat) const;
 	MatriX cwiseInverse() const;
-	MatriX rankUpdate() const;
+	MatriX rankUpdate() const; /*未完成*/
+	//加入矩阵与对角矩阵乘法
 	inline TYPE dot(const MatriX<TYPE, CUDA> &mat) const;	
 	inline MatriX inverse() const;
 	inline MatriX inv() const;
@@ -168,11 +170,14 @@ public:
 	void exportData(TYPE * & dt, bool cuda = false) const;
 	void save(ofstream & fl) const;
 	void read(ifstream & fl);
+	string str(){
+		return matCore::str();
+	}
 
 	//eigenvalue
 	MatriX<TYPE, CUDA> eigenValues() const;
 	MatriX<TYPE, CUDA> eigenSolver(MatriX<TYPE, CUDA>& eigenVals) const;
 	TYPE spectralRadius() const;
 };
-//fixMem矩阵的scale始终保持为1,且不能转置
+
 

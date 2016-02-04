@@ -607,6 +607,26 @@ void cuWrap::NotEqu(double *dest, const  double * x, const double *y, int len){
 	thrust :: device_ptr <double > r (dest ); 
 	thrust::transform(a, a + len , b, r, gpu_funcs::NotEqu<double>());
 };
+void cuWrap::Identity(float * dest, int rows, int cols){
+	cuWrap::fill(dest, 0, rows * cols);
+	int num = min(rows, cols);
+	cuda_params::change_one_len_f(num);
+	CUBLAS_CHECK(cublasScopy(cublasHandle, num, cuda_params::one_array_f, 1, dest, rows + 1));
+};
+void cuWrap::Identity(double * dest, int rows, int cols){
+	cuWrap::fill(dest, 0, rows * cols);
+	int num = min(rows, cols);
+	cuda_params::change_one_len_d(num);
+	CUBLAS_CHECK(cublasDcopy(cublasHandle, num, cuda_params::one_array_d, 1, dest, rows + 1));
+};
+void cuWrap::diagonal(float * dest, const float * src, int size){
+	cuWrap::fill(dest, 0, size * size);
+	CUBLAS_CHECK(cublasScopy(cublasHandle, size, src, 1, dest, size + 1));
+};
+void cuWrap::diagonal(double * dest, const double * src, int size){
+	cuWrap::fill(dest, 0, size * size);
+	CUBLAS_CHECK(cublasDcopy(cublasHandle, size, src, 1, dest, size + 1));
+};
 void cuWrap::inverse(float * invMat, const float * mat, int size){
 	int * info ;
 	int * pivo;

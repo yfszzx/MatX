@@ -3,8 +3,6 @@ template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA>::MatriX(int _rows,int _cols){
 	init(_rows, _cols);
 }
-
-
 MatriX< double, true>::MatriX(const MatriX<double, true> &m){
 	copy(m);
 }
@@ -17,7 +15,6 @@ MatriX< double, false>::MatriX(const MatriX<double, false> &m){
 MatriX< float, false>::MatriX(const MatriX<float, false> &m){
 	copy(m);
 }
-
 MatriX< double, true>::MatriX(const MatriX<double, false> &m){
 	copy(m);
 }
@@ -30,8 +27,6 @@ MatriX< double, false>::MatriX(const MatriX<double, true> &m){
 MatriX< float, false>::MatriX(const MatriX<float , true> &m){
 	copy(m);
 }
-
-
 MatriX< float , true>::MatriX(const MatriX<double, true> &m){
 	copy(m);
 }
@@ -61,10 +56,10 @@ template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA>::MatriX(const MatriX<TYPE, CUDA> &m, operateType OPT){
 		copy(m);
 		switch (OPT){
-		case STR:
+		case STRU:
 			memRealise();
 			break;
-		case TRN:
+		case TRAN:
 			copyRealise(false, true);
 			break;
 		case SCL:
@@ -72,6 +67,9 @@ MatriX< TYPE, CUDA>::MatriX(const MatriX<TYPE, CUDA> &m, operateType OPT){
 			break;
 		case ALL:
 			copyRealise(true, true);
+			break;
+		case TURN:
+			transMem();
 			break;
 		}
 }
@@ -109,9 +107,6 @@ MatriX< float, false> & MatriX< float,false>::operator = (const MatriX< float, t
 	copy(m);
 	return *this;
 }
-
-
-
 MatriX< double, false> & MatriX< double,false>::operator = (const MatriX< float, false> &m){
 	copy(m);
 	return *this;
@@ -183,16 +178,31 @@ MatriX<TYPE,CUDA> MatriX< TYPE,CUDA>::eye(int _rows, int  _cols){
 	if(_cols == 0){
 		_cols = _rows;
 	}
-	if(!CUDA){
-			MatriX< TYPE,CUDA> ret(_rows, _cols);
-			ret.eMat() = eigenMat::Identity(_rows, _cols);
-			return ret;
+	MatriX< TYPE,CUDA> ret(_rows, _cols);
+	if(CUDA){
+		cuWrap::Identity(ret.dataPrt(), _rows, _cols);				
 	}else{
-		eigenMat tmp = eigenMat::Identity(_rows, _cols);
-		MatriX< TYPE,CUDA> ret(_rows, _cols);
-		ret.loadMat(tmp.data(),false);
-		return ret;
+		ret.eMat() = eigenMat::Identity(_rows, _cols);
+		
 	}
+	return ret;
+};
+template <typename TYPE, bool CUDA>
+MatriX<TYPE,CUDA> MatriX< TYPE,CUDA>::Diagonal( const MatriX<TYPE,CUDA> & vec){
+	if(!vec.isVect()){
+		Assert("输入的矩阵不是单列或单行,无法转变为对角矩阵");
+	}
+	int width = vec.size();
+	MatriX<TYPE,CUDA> ret(width, width);
+	if(CUDA){
+		cuWrap::diagonal(ret.dataPrt(), vec.dataPrt(),width);				
+	}else{
+		ret = 0;
+		for(int i = 0; i < vec.size(); i++){
+			ret.dataPrt()[i * (width + 1) ] = vec.dataPrt()[i]; 
+		}
+	}
+	return ret;
 };
 template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> MatriX< TYPE,CUDA>::Identity(int _rows, int  _cols){
@@ -213,7 +223,6 @@ MatriX< TYPE, CUDA> &MatriX< TYPE,CUDA>::selfRandom(){
 	}else{
 		eMat() = eigenMat::Random(rows(), cols());	
 	}
-
 	return *this;
 }
 template <typename TYPE, bool CUDA>
@@ -229,7 +238,7 @@ MatriX<TYPE,CUDA> & MatriX<TYPE,CUDA>::assignment(int row, int col, TYPE val){
 template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> & MatriX<TYPE,CUDA>::assignment(int idx, TYPE val){
 	idx = realPos(idx);
-	val/=scale;
+	val /= scale;
 	if(CUDA){
 		cuWrap::memH2D(dataPrt() + idx, &val, sizeof(TYPE));
 	}else{

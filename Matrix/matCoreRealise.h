@@ -19,9 +19,6 @@ matCore<TYPE, CUDA>::~matCore(){
 }
 template <typename TYPE, bool CUDA>
 void matCore<TYPE, CUDA>::init(int _rows, int _cols){
-	if(fix()){
-		Assert("试图改变fixMem的矩阵");
-	}
 	rowsNum = _rows;
 	colsNum = (_rows == 0)?0:_cols;
 	scale = 1;
@@ -31,27 +28,6 @@ void matCore<TYPE, CUDA>::init(int _rows, int _cols){
 		sizeNum = rowsNum * colsNum;
 		free();
 		mem = new matMem<TYPE, CUDA>(rowsNum, colsNum);
-	}
-}
-template <typename TYPE, bool CUDA>
-void matCore<TYPE, CUDA>::setFix(TYPE * prt){
-	if(CUDA){
-		if(fix()){
-			Assert("已经是fixMem矩阵，不能重新设置");
-		}		
-		copyRealise(true, true);
-		cuWrap::memD2D(prt, dataPrt(), sizeof(TYPE) * size());
-		free();
-		mem = new matMem<TYPE, CUDA>(prt);
-	}
-}
-template <typename TYPE, bool CUDA>
-void matCore<TYPE, CUDA>::fixFree(){
-	if(fix()){
-	matMem * tmp = mem;	
-	mem  = new matMem<TYPE, CUDA>(rowsNum, colsNum);
-	cuWrap::memD2D(mem->mem, tmp->mem,sizeof(TYPE) * size());
-	delete tmp;
 	}
 }
 template <typename TYPE, bool CUDA>
@@ -190,7 +166,6 @@ void  matCore<double, false>::copy(const MatriX<float, true> &m){
 	scale =m.scale;
 	transFlag = m.transFlag;
 }
-
 template <typename TYPE, bool CUDA>
 void matCore<TYPE, CUDA>::memRealise(){
 	if(!unique()){	
@@ -204,8 +179,7 @@ void matCore<TYPE, CUDA>::memRealise(){
 	}	
 }
 template <typename TYPE, bool CUDA>
-void matCore<TYPE, CUDA>::copyRealise(bool sclRealise, bool trnRealise){
-	
+void matCore<TYPE, CUDA>::copyRealise(bool sclRealise, bool trnRealise){	
 	if(!unique()){
 		float tScl = scale;
 		bool tTrans = transFlag;
@@ -339,10 +313,6 @@ bool matCore<TYPE, CUDA>::unique() const{
 	return (mem->count  == 1);
 }
 template <typename TYPE, bool CUDA>
-bool matCore<TYPE, CUDA>::fix() const{
-	return mem->fixMem;
-}
-template <typename TYPE, bool CUDA>
 void  matCore<TYPE, CUDA>::transposeRealise(){
 	if(!transFlag){	
 		return;
@@ -361,6 +331,24 @@ void  matCore<TYPE, CUDA>::transposeRealise(){
 		eMat() = tmp;
 	}
 	transFlag = false;
+}
+template <typename TYPE, bool CUDA>
+void  matCore<TYPE, CUDA>::transMem(){
+	copyRealise(false, false);
+	if(size() == 1){
+		transFlag = false;
+		return;
+	}
+	if(!unique()){
+		Assert("无法改变存在副本的矩阵");
+	}
+	if(CUDA){
+		cuWrap::transpose(rowsNum, colsNum, dataPrt(),  sizeNum);
+	}else{
+		eigenMat tmp = eMat().transpose();
+		eMat() = tmp;
+	}
+	transFlag = !transFlag;
 }
 template <typename TYPE, bool CUDA>
 void  matCore<TYPE, CUDA>::scaleRealise(){	
@@ -396,6 +384,10 @@ void  matCore<TYPE, CUDA>::setTrans(bool flag){
 	}
 }
 template <typename TYPE, bool CUDA>
+bool matCore<TYPE, CUDA>::isVect() const{
+	return (rowsNum == 1 || colsNum == 1);
+}
+template <typename TYPE, bool CUDA>
 void  matCore<TYPE, CUDA>::loadMat(const TYPE * src, bool cuda){
 	memRealise();
 	load(src, cuda);
@@ -404,7 +396,7 @@ template <typename TYPE, bool CUDA>
 string matCore<TYPE, CUDA>::str() const{
 	stringstream ret;
 	ret<<"\ncols:"<<cols()<<" rows:"<<rows()<<" size:"<<size()<<" memery:"<<size() * sizeof(TYPE)<<" prtCount:"<<mem->count<<"\n";
-	ret<<"cuda:"<<CUDA<<" dataType:"<<typeid(TYPE).name()<<" trans:"<<transFlag<<" scale:"<<scale<<" fix:"<<fix()<<"\n";
+	ret<<"cuda:"<<CUDA<<" dataType:"<<typeid(TYPE).name()<<" trans:"<<transFlag<<" scale:"<<scale<<"\n";
 	return ret.str();	
 };
 

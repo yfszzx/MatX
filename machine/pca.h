@@ -88,19 +88,21 @@ protected:
 		means = meansD/trainRounds;
 		var = varD/trainRounds;
 		covMat = covMatD/trainRounds;
-		cout<<means;
-		cout<<var;
-		cout<<covMat;
-	
 		eigenVects = covMat.eigenSolver(eigenVals);
-		cout<<"\neigenVals:";
-		cout<<eigenVals;
-		cout<<"\neigenVects";
+		cout<<var;
 		cout<<eigenVects;
-		rotMat = eigenVects.T().cwiseQuotient(var.replicate(var.cols(), 1) );
+		cout<<var.T().replicate( 1, var.cols()) ;
+		cout<<var.T().replicate( 1, var.cols()).str();
+		MatCF A = var.T().replicate( 1, var.cols()) ;
+		MatCF B = eigenVects;
+		cout<<B.cwiseQuotient(A);
+		rotMat = eigenVects.cwiseQuotient(var.T().replicate( 1, var.cols()) );
+		cout<<rotMat;
+		cout<<rotMat.str();
+		getchar();
 		MatX T = (dt.X[0] - means) * rotMat;
-		MatX TT = T * rotMat.T();
-		cout<<T -TT;
+		MatX TT = T * eigenVects.T();
+		cout<<(dt.X[0] - means).cwiseQuotient(var.replicate(dt.X[0].rows(), 1) ) -TT;
 		getchar();
 		setBestMach();
 	}

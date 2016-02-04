@@ -123,7 +123,7 @@ MatriX<TYPE, CUDA> MatriX<TYPE, CUDA>::rightCols(int num) const{
 template <typename TYPE, bool CUDA>
 MatriX<TYPE, CUDA> MatriX<TYPE, CUDA>::removeTopRows(int num) const{
 	MatriX<TYPE, CUDA> ret(cols(), rows() - num);
-	MatriX<TYPE, CUDA> tmp(this->transpose(), TRN);
+	MatriX<TYPE, CUDA> tmp(this->T(), TRAN);
 	ret.loadMat(tmp.dataPrt() + num * tmp.rows(), CUDA);
 	ret.scale = scale;
 	return ret.transpose();
@@ -131,7 +131,7 @@ MatriX<TYPE, CUDA> MatriX<TYPE, CUDA>::removeTopRows(int num) const{
 template <typename TYPE, bool CUDA>
 MatriX<TYPE, CUDA> MatriX<TYPE, CUDA>::removeBottomRows(int num) const{
 	MatriX<TYPE, CUDA> ret( cols(), rows() - num);
-	MatriX<TYPE, CUDA> tmp(this->transpose(), TRN);
+	MatriX<TYPE, CUDA> tmp(this->T(), TRAN);
 	ret.loadMat(tmp.dataPrt() , CUDA);
 	ret.scale = scale;
 	return ret.transpose();
@@ -139,7 +139,7 @@ MatriX<TYPE, CUDA> MatriX<TYPE, CUDA>::removeBottomRows(int num) const{
 template <typename TYPE, bool CUDA>
 MatriX<TYPE, CUDA> MatriX<TYPE, CUDA>::removeLeftCols(int num) const{
 	MatriX<TYPE, CUDA> ret(rows(), cols() - num);
-	MatriX<TYPE, CUDA> tmp(*this, TRN);
+	MatriX<TYPE, CUDA> tmp(*this, TRAN);
 	ret.loadMat(tmp.dataPrt() + num * tmp.rows(), CUDA);
 	ret.scale = scale;
 	return ret;
@@ -148,7 +148,7 @@ MatriX<TYPE, CUDA> MatriX<TYPE, CUDA>::removeLeftCols(int num) const{
 template <typename TYPE, bool CUDA>
 MatriX<TYPE, CUDA> MatriX<TYPE, CUDA>::removeRightCols(int num) const{
 	MatriX<TYPE, CUDA> ret(rows(), cols() - num);
-	MatriX<TYPE, CUDA> tmp(*this, TRN);
+	MatriX<TYPE, CUDA> tmp(*this, TRAN);
 	ret.loadMat(tmp.dataPrt(), CUDA);
 	ret.scale = scale;
 	return ret;
