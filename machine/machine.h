@@ -10,6 +10,7 @@
 #include "RNN.h"
 #include "ELM.h"
 #include "ESN.h"
+#include "PCA.h"
 
 #include "dataSetBaseRealise.h"
 #include "searchToolRealise.h"

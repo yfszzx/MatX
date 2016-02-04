@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <math.h>
 #include "Eigen/Eigen/Dense"
 using namespace Eigen;
 using namespace std;

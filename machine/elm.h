@@ -56,7 +56,7 @@ protected:
 
 	}
 	virtual bool trainAssist(){
-		Woutd << Wout;		
+		Woutd.add(Wout);		
 		cout<<"\ndataLoss"<<(dt.Y[0] -dt.T[0]).squaredNorm()/batchSize/2/batchInitLoss;		
 		cout<<"\nLoss:"<<getValidLoss()/dt.validInitLoss;
 		dt.showResult();
@@ -64,7 +64,7 @@ protected:
 	};
 	virtual void trainTail(){
 		Wout = Woutd/trainRounds;
-		setBestMach(Mach);
+		setBestMach();
 	}
 public:
 	ELM(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){

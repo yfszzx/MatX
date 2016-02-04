@@ -19,7 +19,7 @@ protected:
 	int outputNum;	
 	void initConfig();
 	MatXG Mach;
-	void setBestMach(const MatXG & best);
+	void setBestMach();
 	int trainCount;
 	float batchInitLoss;
 	int batchSize;

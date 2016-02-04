@@ -4,7 +4,7 @@ MatriX<TYPE, CUDA> MatriX<TYPE, CUDA>::eigenValues() const{
 		Assert("矩阵不是方阵，不能求解特征值");
 	}
 	MatriX<TYPE, CUDA> ret(rows());
-	MatriX<TYPE, CUDA> tmp(*this);
+	MatriX<TYPE, false> tmp(*this);
 	tmp.copyRealise(true, true);
 	SelfAdjointEigenSolver<eigenMat> es(tmp.eMat()); 
 	if (es.info() != Eigen::Success) {  
@@ -21,7 +21,7 @@ MatriX<TYPE, CUDA> MatriX<TYPE, CUDA>::eigenSolver( MatriX<TYPE, CUDA>& eigenVal
 		Assert("矩阵不是方阵，不能求解特征值");
 	}
 	MatriX<TYPE, CUDA> ret(rows(),rows());
-	MatriX<TYPE, CUDA> tmp(*this);
+	MatriX<TYPE, false> tmp(*this);
 	tmp.copyRealise(true, true);
 	SelfAdjointEigenSolver<eigenMat> es(tmp.eMat()); 
 	if (es.info() != Eigen::Success) {  

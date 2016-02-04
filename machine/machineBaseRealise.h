@@ -112,8 +112,8 @@ void MachineBase< TYPE, CUDA>::initSet(int configIdx, string name, float val){
 
 };
 template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::setBestMach(const MatXG & best){
-	bestMach = best;
+void MachineBase< TYPE, CUDA>::setBestMach(){
+	bestMach = Mach;
 }
 template <typename TYPE, bool CUDA>
 MachineBase< TYPE, CUDA>::~MachineBase(){
@@ -242,7 +242,7 @@ void MachineBase< TYPE, CUDA>::trainRun(){
 
 template <typename TYPE, bool CUDA>
 void MachineBase<TYPE, CUDA>::trainMain(){
-	trainCount = 0;	
+	trainCount = 1;	
 	trainHead();
 	if(dt.randBatch){
 		dt.makeBatch(getBatchSize());			

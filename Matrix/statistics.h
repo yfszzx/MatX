@@ -70,6 +70,15 @@ MatriX<TYPE,CUDA> MatriX<TYPE,CUDA>::MSE() const{
 	return ::square(*this - mean()).mean();
 };
 template <typename TYPE, bool CUDA>
+MatriX<TYPE,CUDA> MatriX<TYPE,CUDA>::RMS( MatriX<TYPE,CUDA> & avg) const{
+	avg = mean();
+	return ::sqrt(::square(*this - avg).mean());
+};
+template <typename TYPE, bool CUDA>
+MatriX<TYPE,CUDA> MatriX<TYPE,CUDA>::RMS() const{
+	return ::sqrt(::square(*this - mean()).mean());
+};
+template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> MatriX<TYPE,CUDA>::MSE( MatriX<TYPE,CUDA> & avg) const{
 	avg = mean();
 	return ::square(*this - avg).mean();
@@ -100,7 +109,7 @@ TYPE MatriX< TYPE,CUDA>::correl(MatriX<TYPE, CUDA>& mat) const{
 	}
 	double xsum = allSum();
 	double ysum = mat.allSum();
-	return (n * this->dot(mat) - xsum * ysum)/sqrt(( n * this->squaredNorm() - xsum * xsum) *( n * mat.squaredNorm() - ysum * ysum));
+	return (n * this->dot(mat) - xsum * ysum)/::sqrt(( n * this->squaredNorm() - xsum * xsum) *( n * mat.squaredNorm() - ysum * ysum));
 };
 template <typename TYPE, bool CUDA>
 TYPE MatriX< TYPE,CUDA>::allMin() const{

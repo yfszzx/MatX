@@ -119,7 +119,7 @@ MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseQuotient (const MatriX<TYPE, CUDA> 
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseInverse () const{
-	MatriX<TYPE, CUDA> ret(mat, STR);
+	MatriX<TYPE, CUDA> ret(*this, STR);
 	if(CUDA){
 		cuWrap::cwiseInverse(ret.dataPrt(), dataPrt(), size());
 	}else{
@@ -133,7 +133,7 @@ template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::rankUpdate() const{
 	MatriX<TYPE, CUDA> ret = MatriX< TYPE, CUDA>::Zero(rows(), rows());
 	if(CUDA){
-
+	//	cuWrap::rankUpdate(ret.dataPrt(), dataPrt());
 	}else{
 		ret.eMat() = ret.eMat().selfadjointView<Eigen::Upper>().rankUpdate(eMat());
 	}
@@ -198,14 +198,16 @@ MatriX< TYPE, CUDA>& MatriX< TYPE,CUDA>::add(const MatriX<float,CUDA> &mat){
 			if(trans() == mat.trans()){
 				cuWrap::plusFloatMat(dataPrt(), scale, mat.dataPrt(), mat.scale, size());
 			}else{
-				MatriX<TYPE, CUDA> tmp(mat.T(), TRN);
+				MatriX<float, CUDA> tmp = mat.T();
+				tmp.copyRealise(false, true);
 				cuWrap::plusFloatMat(dataPrt(), scale, tmp.dataPrt(), tmp.scale, size());
 			}
 		}else{
 			if(trans() == mat.trans()){
 				std::transform(dataPrt(), dataPrt() + size(), mat.dataPrt(), dataPrt(), cpu_funcs::plusFloatMat(scale, mat.scale));				
 			}else{
-				MatriX<TYPE, CUDA> tmp(mat.T(), TRN);
+				MatriX<float, CUDA> tmp = mat.T();
+				tmp.copyRealise(false, true);
 				std::transform(dataPrt(), dataPrt() + size(), tmp.dataPrt(), dataPrt(), cpu_funcs::plusFloatMat(scale, tmp.scale));	
 			}
 

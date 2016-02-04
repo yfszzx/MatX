@@ -45,7 +45,7 @@ bool ANNBase<TYPE, CUDA>::stepRecord(){
 		validLoss = getValidLoss()/dt.validInitLoss;
 		if(minValidLoss == 0 || minValidLoss > validLoss){
 			minValidLoss = validLoss;
-			setBestMach(Mach);
+			setBestMach();
 		}
 		showAndRecord();
 	}

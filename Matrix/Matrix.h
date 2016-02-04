@@ -13,6 +13,8 @@ inline MatriX<TYPE, CUDA> square(const MatriX<TYPE, CUDA> &m);
 template <typename TYPE, bool CUDA>
 inline MatriX<TYPE, CUDA> abs(const MatriX<TYPE, CUDA> &m);
 template <typename TYPE, bool CUDA>
+inline MatriX<TYPE, CUDA> sqrt(const MatriX<TYPE, CUDA> &m);
+template <typename TYPE, bool CUDA>
 MatriX<TYPE, CUDA> operator -(const MatriX<TYPE, CUDA> &m);
 template <typename TYPE, bool CUDA>
 ostream& operator <<(ostream &os, const MatriX<TYPE, CUDA> &m);
@@ -33,6 +35,7 @@ class MatriX : public matCore<TYPE, CUDA> {
 	friend MatriX<TYPE, CUDA> tanh <TYPE, CUDA>(const MatriX<TYPE, CUDA> &m);
 	friend  MatriX<TYPE, CUDA> square <TYPE, CUDA>(const MatriX<TYPE, CUDA> &m);
 	friend  MatriX<TYPE, CUDA> abs <TYPE, CUDA>(const MatriX<TYPE, CUDA> &m);
+	friend  MatriX<TYPE, CUDA> sqrt <TYPE, CUDA>(const MatriX<TYPE, CUDA> &m);
 	friend ostream& operator << <TYPE, CUDA>(ostream &os, const MatriX<TYPE, CUDA> &m);
 	friend MatriX<TYPE, CUDA> operator - <TYPE, CUDA>(const MatriX<TYPE, CUDA> &m);
 	friend MatGroup<TYPE, CUDA>;
@@ -52,6 +55,7 @@ protected:
 	inline MatriX & sigm();
 	inline MatriX & square();
 	inline MatriX & abs();
+	inline MatriX & sqrt();
 public:
 
 	MatriX(int _rows = 0, int _cols = 1);
@@ -151,6 +155,8 @@ public:
 	inline MatriX<TYPE, CUDA> mean()  const;
 	inline MatriX<TYPE, CUDA> MSE(MatriX<TYPE, CUDA>& avg)  const;
 	inline MatriX<TYPE, CUDA> MSE()  const;
+	inline MatriX<TYPE, CUDA> RMS(MatriX<TYPE, CUDA>& avg)  const;
+	inline MatriX<TYPE, CUDA> RMS()  const;
 	inline MatriX<TYPE, CUDA> rowsSum()  const;//效率待改进
 	inline MatriX<TYPE, CUDA> colsSum()  const;//效率待改进
 	TYPE correl(MatriX<TYPE, CUDA>& mat) const;

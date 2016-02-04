@@ -1,92 +1,112 @@
 template <typename TYPE, bool CUDA>
-class ELM:public MachineBase<TYPE, CUDA>{	
+class PCA:public MachineBase<TYPE, CUDA>{	
 private:	
 	MatX means;
 	MatX var;
 	MatX covMat;
 	MatX eigenVals;
 	MatX eigenVects;
-	MatX transMat;
+	MatX rotMat;
 
 	MatXD meansD;
 	MatXD varD;
-	MatX covMatD;
-	TYPE regOut;
-	int nodes;
+	MatXD covMatD;
+	MatXD meansTmp;
+	MatXD varTmp;
+	MatXD covMatTmp;
 	int trainRounds;
 	float batchScale;
 protected:
 	virtual void initConfigValue(){
-		/*
-		initSet(0, "nodes",100);
-		initSet(1, "regOut",0);
-		initSet(2, "trainRounds",20);
-		*/
-		initSet(3, "batchSize",0.5);
-		
+		initSet(0, "trainRounds",50);
+		initSet(1, "batchScale",0.1);		
 	};
 	virtual void setConfigValue(int idx, float val){
-		/*
 		switch(idx){
 		case 0:
-			nodes = val;
-			break;
-		case 1:
-			regOut = val;
-			break;
-		case 2:
 			trainRounds = val;
 			break;
-		case 3:
+		case 1:
 			batchScale = val;
 			break;
 		}
-		*/
+		
 	};
-	virtual void initWs(bool trainMod = true){
-		//means = MatX::Random(inputNum, nodes);
-		//Wout =  MatX::Zero(nodes + 1, outputNum);
-		Ws<<means<<var<<covMat<<transMat;
+	virtual void initMachine(){
+			Mach<<means<<var<<covMat<<eigenVals<<eigenVects<<rotMat;
 	};
-	virtual void predict( MatX * _Y,  MatX* _X, int len = 1){
-		MatX ones = MatX::Ones(_X[0].rows());
-		_Y[0] = (_X[0] - means) * transMat;
+	virtual void predictCore( MatX * _Y,  MatX* _X, int len = 1){
+		//MatX ones = MatX::Ones(_X[0].rows());
+		//_Y[0] = (_X[0] - means) * transMat;
 	};
 	virtual int getBatchSize(){
 		return dt.trainNum  * batchScale;
 	}
-public:
-	ELM(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){
-		initConfig();		
-	};
-	virtual void train(){
-		var = dt.X[0].MSE(means);
-		MatX tmp = (dt.X[0] - means).cwiseProduct(var.cwiseInverse());
-		covMat = tmp.rankUpdate();
-	}
-	virtual bool trainOperate(){
-		if(trainCount == 0){
-			meansD = means;
-			varD = var;
-			covMatD = covMat;
-		}else{
-			meansD.plusFloatMat(means);
-			varD.plusFloatMat(var);
-			covMatD.plusFloatMat(covMat);
+	virtual void trainHead(){};
+	virtual void trainCore(){
+		int num = (dt.seriesLen - dt.preLen) * dt.X[0].rows();
+
+		meansTmp = dt.X[dt.preLen].sum();
+		for(int i = dt.preLen + 1; i<dt.seriesLen; i++){
+			meansTmp.add(dt.X[i].sum());
 		}
-		
-		
-		cout<<"\ndataLoss"<<(dt.Y[0] -dt.T[0]).squaredNorm()/batchSize/2/batchInitLoss;
-		averageWs(bestWs, Ws, trainCount);
-		cout<<"\nLoss:"<<getValidLoss()/dt.validInitLoss;
-		dt.showResult();
+		meansTmp /= num;
+		means = meansTmp;
+
+		MatX * dtCpy = new MatX[dt.seriesLen - dt.preLen];
+		dtCpy[0] = dt.X[dt.preLen] - means;
+		varTmp = square(dtCpy[0]).sum();
+		for(int i =1; i< dt.seriesLen - dt.preLen; i++){
+			dtCpy[i] = dt.X[i + dt.preLen] - means;
+			varTmp.add(square(dtCpy[i]).sum());
+
+		}
+		varTmp = sqrt(varTmp/num);
+		covMatTmp = dtCpy[0].T() * dtCpy[0];
+		for(int i = 1; i< dt.seriesLen - dt.preLen; i++){
+			covMatTmp.add(dtCpy[i].T() * dtCpy[i]);
+		}
+		covMatTmp /= num;		
+		MatXD tmp = (varTmp.T() * varTmp).cwiseInverse();
+		covMatTmp = covMatTmp.cwiseProduct(tmp);//¹éÒ»»¯·½²î
+		delete [] dtCpy;
+	}
+	virtual bool trainAssist(){
+		if(trainCount == 1){
+			meansD = meansTmp;
+			varD = varTmp;
+			covMatD = covMatTmp;
+		}else{
+			meansD += meansTmp;
+			varD += varTmp;
+			covMatD += covMatTmp;
+		}
+		cout<<"\n"<<trainCount;
 		return !( trainCount < trainRounds);
 	};
-	virtual void trainFinal(){
-			means = meansD/trainRounds;
-			var = varD/trainRounds;
-			covMat = covMatD/trainRounds;
-			eigenVects = covMat.eigenSolver(eigenVals);
-		}
+	virtual void trainTail(){
+		means = meansD/trainRounds;
+		var = varD/trainRounds;
+		covMat = covMatD/trainRounds;
+		cout<<means;
+		cout<<var;
+		cout<<covMat;
+	
+		eigenVects = covMat.eigenSolver(eigenVals);
+		cout<<"\neigenVals:";
+		cout<<eigenVals;
+		cout<<"\neigenVects";
+		cout<<eigenVects;
+		rotMat = eigenVects.T().cwiseQuotient(var.replicate(var.cols(), 1) );
+		MatX T = (dt.X[0] - means) * rotMat;
+		MatX TT = T * rotMat.T();
+		cout<<T -TT;
+		getchar();
+		setBestMach();
 	}
+public:
+	PCA(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){
+		initConfig();		
+	};
+	
 };

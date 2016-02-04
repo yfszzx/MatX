@@ -26,6 +26,8 @@ namespace cuWrap{
 	 double min_element(double *p, int len);
 	 void abs(float *p,  int len);
 	 void abs(double *p,  int len);
+	 void sqrt(float *p,  int len);
+	 void sqrt(double *p,  int len);
 	 //trans: 0 不转置 1 转置 2 共轭转置
 	 void gemm(char transA, char transB, int rowA, int colB, int jiont, const float*A, const float *B, float *C, float scale);
 	 void gemm(char transA, char transB, int rowA, int colB, int joint, const double *A, const double *B, double *C, double scale);

@@ -43,6 +43,12 @@ namespace gpu_funcs{
 		}  
 	};
 	template <typename TYPE>
+	struct sqrt {  
+		__device__ TYPE operator ()(const  TYPE & x) const {  
+			return ::sqrt(x); 
+		}  
+	};
+	template <typename TYPE>
 	struct GreEqu {  
 		__device__ TYPE operator ()(const  TYPE & x, const TYPE & y) const {  
 			return (x >= y)?1:0;
@@ -274,6 +280,14 @@ void cuWrap::abs(float *p,  int len){
 void cuWrap::abs(double *p,  int len){
 	thrust :: device_ptr <double> f(p); 
 	thrust :: transform (f, f + len ,f , gpu_funcs::absf<double>());
+};
+void cuWrap::sqrt(float *p,  int len){
+	thrust :: device_ptr <float> f(p); 
+	thrust :: transform (f, f + len ,f , gpu_funcs::sqrt<float>());
+};
+void cuWrap::sqrt(double *p,  int len){
+	thrust :: device_ptr <double> f(p); 
+	thrust :: transform (f, f + len ,f , gpu_funcs::sqrt<double>());
 };
 void cuWrap::gemm(char transA, char transB, int rowA, int colB, int joint, const float *A, const float *B, float *C, float scale){
 	CUBLAS_CHECK(cublasSgemm(cublasHandle, ( cublasOperation_t)transA, ( cublasOperation_t)transB, rowA, colB, joint, 

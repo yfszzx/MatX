@@ -28,6 +28,10 @@ namespace matrixGlobal{
 			return (x>0)?x:(-x);
 		}
 		template <typename TYPE>
+		TYPE sqrt(const TYPE x){			
+			return ::sqrt(x);
+		}
+		template <typename TYPE>
 		TYPE Gre(const TYPE x, const TYPE y){
 			return TYPE(x > y);
 		}
@@ -64,8 +68,7 @@ namespace matrixGlobal{
 			double operator()(const double x, const float y){
 				return x * sclD + double(y * sclS);
 			}		
-		};
-		
+		};		
 
 	}
 	const bool randDebug = false;

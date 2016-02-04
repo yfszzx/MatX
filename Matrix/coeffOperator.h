@@ -40,6 +40,17 @@ MatriX< TYPE, CUDA> &MatriX< TYPE,CUDA>::abs(){
 	return *this;
 };
 template <typename TYPE, bool CUDA>
+MatriX< TYPE, CUDA> &MatriX< TYPE,CUDA>::sqrt(){
+	copyRealise(false, false);
+	if(CUDA){
+		cuWrap::sqrt(dataPrt(), size());
+	}else{
+		std::transform(dataPrt(), dataPrt() + size(), dataPrt(), cpu_funcs::sqrt<TYPE>);
+	}
+	scale = ::sqrt(scale);
+	return *this;
+};
+template <typename TYPE, bool CUDA>
 MatriX<TYPE, CUDA> sigm (const MatriX<TYPE, CUDA> &m){
 	MatriX<TYPE, CUDA> ret = m;	
 	return ret.sigm();
@@ -58,4 +69,9 @@ template <typename TYPE, bool CUDA>
 MatriX<TYPE, CUDA> abs (const MatriX<TYPE, CUDA> &m){
 	MatriX<TYPE, CUDA> ret = m;	
 	return ret.abs();
+};
+template <typename TYPE, bool CUDA>
+MatriX<TYPE, CUDA> sqrt (const MatriX<TYPE, CUDA> &m){
+	MatriX<TYPE, CUDA> ret = m;	
+	return ret.sqrt();
 };
