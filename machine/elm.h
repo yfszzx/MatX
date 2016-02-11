@@ -4,6 +4,7 @@ private:
 	MatX Win;
 	MatX Wout;
 	MatXD Woutd;
+	MatX hide;
 	TYPE regOut;
 	int nodes;
 	int trainRounds;
@@ -34,7 +35,6 @@ protected:
 	virtual void initMachine(){
 		Win = MatX::Random(inputNum, nodes);
 		Wout =  MatX::Zero(nodes + 1, outputNum);
-		Woutd = Wout;
 		Mach<<Win<<Wout;
 	};
 	virtual void predictCore( MatX * _Y,  MatX* _X, int len = 1){
@@ -44,19 +44,20 @@ protected:
 	virtual int getBatchSize(){
 		return dt.trainNum  * batchScale;
 	}
-	virtual void trainHead(){};
+	virtual void trainHead(){
+		Woutd = MatX::Zero(nodes + 1, outputNum);
+	};
 	virtual void trainCore(){
 		MatX I = MatX::Identity(nodes + 1);	
 		MatX A;
 		MatX ones = MatX::Ones(dt.X[0].rows());
-		MatX hide =  tanh(dt.X[0]* Win).colJoint(ones);
+		hide =  tanh(dt.X[0]* Win).colJoint(ones);
 		A = I * regOut + hide.T() * hide;
 		Wout = A.inv() * hide.T() * dt.T[0];
-		dt.Y[0] = hide * Wout;
-
 	}
 	virtual bool trainAssist(){
-		Woutd.add(Wout);		
+		Woutd.add(Wout);	
+		dt.Y[0] = hide * Wout;
 		cout<<"\ndataLoss"<<(dt.Y[0] -dt.T[0]).squaredNorm()/batchSize/2/batchInitLoss;		
 		cout<<"\nLoss:"<<getValidLoss()/dt.validInitLoss;
 		dt.showResult();

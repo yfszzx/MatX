@@ -18,7 +18,7 @@
 #include "ANNBasePrivate.h"
 #include "ANNBasePublic.h"
 //#include "MLPRealise.h"
-#include "seriesDataBaseRealise.h"
+//#include "seriesDataBaseRealise.h"
 //#include "RNNRealise.h"
 //#include "ELMRealise.h"
 #include "samples.h"

@@ -68,8 +68,7 @@ MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseProduct (const MatriX<TYPE, CUDA> &
 	if(mat.size() != size()){
 		Assert("矩阵大小不匹配,无法进行cwiseProduct运算");	
 	}
-	MatriX<TYPE, CUDA> ret(realRows(), realCols());
-	ret.setTrans(trans());
+	MatriX<TYPE, CUDA> ret(*this, STRU);
 	if(CUDA){
 			if(trans() == mat.trans()){
 				cuWrap::product( mat.dataPrt(), dataPrt(), ret.dataPrt(), size());
@@ -92,8 +91,7 @@ MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseQuotient (const MatriX<TYPE, CUDA> 
 	if(mat.size() != size()){
 		Assert("矩阵大小不匹配,无法进行cwiseProduct运算");	
 	}
-	MatriX<TYPE, CUDA> ret(realRows(), realCols());
-	ret.setTrans(trans());
+	MatriX<TYPE, CUDA> ret(*this, STRU);
 	if(CUDA){
 		if(trans() == mat.trans()){
 			cuWrap::quotient(dataPrt(),  mat.dataPrt(), ret.dataPrt(), size());
@@ -113,8 +111,7 @@ MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseQuotient (const MatriX<TYPE, CUDA> 
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseInverse () const{
-	MatriX<TYPE, CUDA> ret(realRows(), realCols());
-	ret.setTrans(trans());
+	MatriX<TYPE, CUDA> ret(*this, STRU);
 	if(CUDA){
 		cuWrap::cwiseInverse(ret.dataPrt(), dataPrt(), size());
 	}else{

@@ -61,3 +61,9 @@ namespace ANNGlobal{
 
 }
 using namespace ANNGlobal;
+template <typename TYPE, bool CUDA>
+class dataSetBase;
+template<typename TYPE, bool CUDA>
+class seriesDataBase;
+template<typename TYPE, bool CUDA>
+class MachineBase;

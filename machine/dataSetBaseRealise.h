@@ -85,13 +85,9 @@ void dataSetBase<TYPE, CUDA>::makeBatch(int size){
 	batchInitLoss /= seriesLen;
 }
 template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::init(int iptNum, int optNum,   activeFunctionType  _actFunc,bool rndBatch, int crossNum, int seriNum){
+void dataSetBase<TYPE, CUDA>::init(int iptNum, int optNum){
 	inputNum = iptNum;
 	outputNum = optNum;
-	randBatch = rndBatch;
-	seriesLen = seriNum;
-	actFunc = _actFunc;
-	crossFolds = crossNum;
 }
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::makeValid(int validIdx){
@@ -126,6 +122,12 @@ dataSetBase<TYPE, CUDA>::dataSetBase(){
 	validFoldIdx = -1;
 	maxCorr = -1;
 	preLen = 0;
+	seriesLen = 1;
+	randBatch = false;
+	crossFolds = 1;
+	supervise = true;
+	actFunc = LINEAR;
+	seriesMod = false;
 }
 template <typename TYPE, bool CUDA>
 dataSetBase<TYPE, CUDA>::~dataSetBase(){
@@ -146,13 +148,16 @@ dataSetBase<TYPE, CUDA>::~dataSetBase(){
 		delete [] Thost;
 	}
 }
-
 template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::load(int dtNum){
-	dataNum = dtNum;	
+void dataSetBase<TYPE, CUDA>::loadSamples(const TYPE * _X, const TYPE * _T, int _dataNum){
+	if(seriesMod){
+		Assert("序列数据调用loadSamples函数缺少sample的序列长度参数");
+	}
+	dataNum = _dataNum;
 	initDataSpace();
-	loadData();
-}
+	X0[0].importData(_X);
+	T0[0].importData(_T);
+};
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::makeValidList(int vldIdx){		
 	for(int i = 0; i< dataNum ; i++){
@@ -164,6 +169,8 @@ template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::show(){
 	cout<<"\ninputNum:"<<inputNum<<"\toutputNum:"<<outputNum<<"\trandBatch："<<randBatch;
 	cout<<"\ncrossFolds:"<<crossFolds<<"\tvalidIdx:"<<validFoldIdx<<"\tdataNum:"<<dataNum<<"\ttrainNum:"<<trainNum<<"\tvalidNum"<<validNum;
+	cout<<"\nsupervise:"<<supervise;
+	cout<<"\nactFunc"<<actFunc;
 }
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::showValidCorrel(){
@@ -216,3 +223,40 @@ void dataSetBase<TYPE, CUDA>::outputValidCsv(string path, bool Continue){
 	fl.close();
 	cout<<"\n已保存"<<path;
 };
+
+template <typename TYPE, bool CUDA>
+void dataSetBase<TYPE, CUDA>::set(string name, float val){
+	if(name == "randBatch"){
+		randBatch = val;
+		return;
+	}
+
+	if(name == "crossFolds"){
+		crossFolds = val;
+		return;
+	}
+	if(name == "supervise"){
+		supervise = val;
+		return;
+	}
+	if(name == "activeFunc"){
+		actFunc = (activeFunctionType)((int)val);
+		return;
+	}	
+	if(seriesMod){
+		if(name == "preLen"){
+			preLen = val;
+			return;
+		}
+		if(name == "seriesLen"){
+			seriesLen = val;	
+			return;
+		}
+	}
+	cout<<"\n不存在参数 "<<name;
+};
+
+template <typename TYPE, bool CUDA>
+void dataSetBase<TYPE, CUDA>::operator()(string name, float val){
+	set(name, val);
+}

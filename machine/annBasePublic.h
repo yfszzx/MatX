@@ -37,7 +37,6 @@ void ANNBase<TYPE, CUDA>::trainHead(){
 };
 template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::setConfigValue(int idx, float val){
-	configRecorder[idx] = val;
 	if(idx < subConfigsNum || subConfigsNum == -1){
 		annSetConfigValue(idx , val);
 		Search.changeBatch();

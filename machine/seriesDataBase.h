@@ -1,49 +1,47 @@
 template<typename TYPE, bool CUDA>
 class seriesDataBase:public dataSetBase<TYPE, CUDA>{
+private:
+	int smartSeriesLen(int seriNum, int len){
+		int num = (len - preLen)/(seriesLen - preLen);
+		int left = (len - preLen)%(seriesLen - preLen);
+		seriesLen  += left%num;
+		num = (len - preLen)/(seriesLen - preLen);
+		return num * seriNum;
+	}
 protected:
-	TYPE * srcX;
-	TYPE * srcT;
-	virtual int loadSeries() = 0;//·µ»ØdataNum;
-	virtual void cutSeries(int dtNum){	
-		TYPE *tmpX = new TYPE[dtNum * inputNum * seriesLen];
-		TYPE *tmpT = new TYPE[dtNum * outputNum * seriesLen];
+	void loadSamples(const TYPE * _X, const TYPE * _T, int seriNum, int len){
+		dataNum = smartSeriesLen(seriNum, len);
+		TYPE *tmpX = new TYPE[dataNum * inputNum * seriesLen];
+		TYPE *tmpT = new TYPE[dataNum * outputNum * seriesLen];
+		int subNum = dataNum / seriNum;
+		int realLen = seriesLen - preLen;
 		for(int i = 0; i < seriesLen; i++){
-			for(int j = 0; j < dtNum; j++){
-				int srcPos = j * (seriesLen - preLen) + i;
-				int dstPos = i * dtNum + j;
-				memcpy(tmpX + dstPos * inputNum,  srcX + srcPos * inputNum, sizeof(TYPE) * inputNum);
-				memcpy(tmpT + dstPos * outputNum,  srcT + srcPos * outputNum, sizeof(TYPE) * outputNum);				
+			for(int j = 0; j < seriNum; j++){
+				for(int k = 0; k < subNum; k++){
+					int dataIdx = k * seriNum + j;
+					int srcPos = j * len + k * realLen;
+					int dstPos = i * dataNum + dataIdx;
+					memcpy(tmpX + dstPos * inputNum,  _X + srcPos * inputNum, sizeof(TYPE) * inputNum);
+					memcpy(tmpT + dstPos * outputNum,  _T + srcPos * outputNum, sizeof(TYPE) * outputNum);	
+
+				}
+						
 			}
 		}
-		swap(srcX, tmpX);
-		swap(srcT, tmpT);
+		initDataSpace();
+		for(int i = 0; i < seriesLen; i++){
+			X0[i].importData(tmpX + dataNum * inputNum * i);
+			T0[i].importData(tmpT + dataNum * outputNum * i);	
+		}	
 		delete [] tmpX;
 		delete [] tmpT;
 	}
-	void loadData(){	
-		for(int i = 0; i < seriesLen; i++){
-			X0[i].importData(srcX + dataNum * inputNum * i);
-			T0[i].importData(srcT + dataNum * outputNum * i);	
-		}
-		
-	}
-	void load(){
-		int num = loadSeries();
-		dataSetBase<TYPE, CUDA>::load(num);		
-	}
-	
+	virtual void createSamples() = 0;
 public:
-	seriesDataBase(int _preLen){
-		srcX = NULL;
-		srcT = NULL;
-		preLen = _preLen;
+	seriesDataBase(){
+		preLen = 1;
+		seriesMod = true;		
 	};
-	~seriesDataBase(){
-		if(srcX != NULL){
-			delete [] srcX;
-			delete [] srcT;
-		}
-	}
 	void show(){
 		dataSetBase::show();
 		cout<<"\nseriesLen:"<<seriesLen<<"\tpreLen:"<<preLen;

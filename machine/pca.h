@@ -89,26 +89,12 @@ protected:
 		var = varD/trainRounds;
 		covMat = covMatD/trainRounds;
 		eigenVects = covMat.eigenSolver(eigenVals);
-		cout<<var;
-		cout<<eigenVects;
-		cout<<var.T().replicate( 1, var.cols()) ;
-		cout<<var.T().replicate( 1, var.cols()).str();
-		MatCF A = var.T().replicate( 1, var.cols()) ;
-		MatCF B = eigenVects;
-		cout<<B.cwiseQuotient(A);
-		rotMat = eigenVects.cwiseQuotient(var.T().replicate( 1, var.cols()) );
-		cout<<rotMat;
-		cout<<rotMat.str();
-		getchar();
-		MatX T = (dt.X[0] - means) * rotMat;
-		MatX TT = T * eigenVects.T();
-		cout<<(dt.X[0] - means).cwiseQuotient(var.replicate(dt.X[0].rows(), 1) ) -TT;
-		getchar();
+		rotMat = MatX::Diagonal(var.cwiseInverse()) * eigenVects;
 		setBestMach();
 	}
 public:
 	PCA(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){
-		initConfig();		
-	};
-	
+		initConfig();
+		dt("supervise", false);
+	};	
 };

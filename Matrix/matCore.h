@@ -40,7 +40,7 @@ protected:
 	inline void copy(const MatriX<double, CUDA> &m);
 	inline void copy(const MatriX<double, !CUDA> &m);
 	inline void tmpcopy(const MatriX<TYPE, CUDA> &m);
-	inline void memRealise();
+	inline void memRealise(bool realiseTranspose = true);
 	inline void copyRealise(bool sclRealise, bool trnRealise = false);
 	inline void loadMat(const TYPE * src, bool cuda = false);
 	string str() const;

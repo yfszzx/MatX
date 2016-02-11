@@ -86,12 +86,16 @@ void MachineBase< TYPE, CUDA>::wholeValidsResult(){
 
 template <typename TYPE, bool CUDA>
 TYPE MachineBase< TYPE, CUDA>::getValidLoss(){
+	if(dt.supervise){
 	predictCore( dt.Yv,  dt.Xv, dt.seriesLen);
 	double ls = 0;
 	for(int i = dt.preLen ; i < dt.seriesLen; i++){
 		ls += (dt.Yv[i] - dt.Tv[i]).squaredNorm();
 	}
 	return ls/dt.validNum/(dt.seriesLen - dt.preLen)/2;
+	}else{
+		return 0;
+	}
 };
 template <typename TYPE, bool CUDA>
 MachineBase< TYPE, CUDA>::MachineBase(dataSetBase<TYPE, CUDA> & dtSet, string path):dt(dtSet){
@@ -160,6 +164,7 @@ void MachineBase< TYPE, CUDA>::operator ()(string s, float val){
 		cout<<"\n没有找到参数"<<s;
 		return;
 	}
+	configRecorder[idx] = val;
 	setConfigValue(idx, val);
 };
 
@@ -227,12 +232,14 @@ void MachineBase< TYPE, CUDA>::trainInitialize(){
 }
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::trainRun(){
+	dt.loadDatas();
 	for(int i = 0; i< dt.crossFolds; i++){
 			
 		if(overedFile(i)){
 			continue;
 		}
 		dt.makeValid(i);
+		dt.show();
 		trainInitialize();			
 		trainMain();
 		save(true);

@@ -57,7 +57,7 @@ MatriX< TYPE, CUDA>::MatriX(const MatriX<TYPE, CUDA> &m, operateType OPT){
 		copy(m);
 		switch (OPT){
 		case STRU:
-			memRealise();
+			memRealise(false);
 			break;
 		case TRAN:
 			copyRealise(false, true);
@@ -141,7 +141,7 @@ MatriX< float, true> & MatriX< float,true>::operator = (const MatriX< double, fa
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> & MatriX< TYPE,CUDA>::operator = (const TYPE val){
-	memRealise();
+	memRealise(false);
 	if(CUDA){
 		cuWrap::fill(dataPrt(), val, size());
 	}else{
@@ -226,7 +226,7 @@ MatriX< TYPE, CUDA> &MatriX< TYPE,CUDA>::selfRandom(){
 	return *this;
 }
 template <typename TYPE, bool CUDA>
-MatriX<TYPE,CUDA> & MatriX< TYPE,CUDA>::importData(TYPE * src, bool cuda){
+MatriX<TYPE,CUDA> & MatriX< TYPE,CUDA>::importData(const TYPE * src, bool cuda){
 	loadMat(src, cuda);
 	return *this;
 };

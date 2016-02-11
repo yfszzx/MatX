@@ -72,14 +72,25 @@ protected:
 		dataLoss = dataLoss / num / 2;
 		loss = dataLoss + (regIn * Win.squaredNorm() + regOut * Wout.squaredNorm() + regJnt * Wjnt.squaredNorm())/2;
 	}
-	virtual void initWs(bool trainMod = true){
+	virtual void  initMachine(){
 		Win =  MatX::Random(inputNum, nodes)/1000;
 		Wout =  MatX::Random(nodes, outputNum)/1000;
 		Bin =  MatX::Random(1, nodes)/1000;
 		Bout =  MatX::Random(1, outputNum)/1000;
 		Wjnt =  MatX::Random(nodes, nodes)/1000;
-		Ws<<Win<<Wout<<Wjnt<<Bin<<Bout;	
-		if(trainMod && hide == NULL){
+		Mach<<Win<<Wout<<Wjnt<<Bin<<Bout;	
+		
+	}
+	virtual void predictCore( MatX * _Y,  MatX* _X, int len = 1) {
+		MatX st = tanh(_X[0] * Win + Bin);
+		_Y[0] = activeFunc(dt.actFunc, st * Wout + Bout);
+		for(int i = 1; i < len; i++){
+			st = tanh(_X[i] * Win + st * Wjnt + Bin);
+			_Y[i] = activeFunc(dt.actFunc, st * Wout + Bout);
+		}	
+	}
+	virtual void annTrainHead(){
+		if(hide == NULL){
 			grad_out = Wout;
 			grad_in = Win;
 			grad_Bout = Bout;
@@ -87,16 +98,7 @@ protected:
 			grad_jnt = Wjnt;
 			grads<<grad_in<<grad_out<<grad_jnt<<grad_Bin<<grad_Bout;
 			hide = new MatX[dt.seriesLen];
-			
 		}
-	}
-	virtual void predict( MatX * _Y,  MatX* _X, int len = 1) {
-		MatX st = tanh(_X[0] * Win + Bin);
-		_Y[0] = activeFunc(dt.actFunc, st * Wout + Bout);
-		for(int i = 1; i < len; i++){
-			st = tanh(_X[i] * Win + st * Wjnt + Bin);
-			_Y[i] = activeFunc(dt.actFunc, st * Wout + Bout);
-		}	
 	}
 public:	
 	RNN(seriesDataBase<TYPE, CUDA> & dtSet, string path):ANNBase<TYPE, CUDA>(dtSet, path){	

@@ -167,14 +167,23 @@ void  matCore<double, false>::copy(const MatriX<float, true> &m){
 	transFlag = m.transFlag;
 }
 template <typename TYPE, bool CUDA>
-void matCore<TYPE, CUDA>::memRealise(){
+void matCore<TYPE, CUDA>::memRealise(bool realiseTranspose){
 	if(!unique()){	
-		init(rows(), cols());
+		if(realiseTranspose){
+			init(rows(), cols());
+		}else{
+			bool t = transFlag;
+			init(realRows(), realCols());
+			transFlag = t;
+		}		
 	}else{
-		if(transFlag){
-			swap(rowsNum, colsNum);
+		if(realiseTranspose){
+			if(transFlag){
+				swap(rowsNum, colsNum);
+			}
+			transFlag = false;
 		}
-		transFlag = false;
+		
 		scale = 1;
 	}	
 }
@@ -224,10 +233,10 @@ void matCore<float, true>::load(const float * src, bool cuda = false){
 template<>
 void matCore<float, false>::load(const float * src, bool cuda = false){
 	if(cuda){
-	
-			cuWrap::memD2H(dataPrt(), src, sizeof(float) * size());
+
+		cuWrap::memD2H(dataPrt(), src, sizeof(float) * size());
 	}else{
-			memcpy(dataPrt(), src, sizeof(float) * size());	
+		memcpy(dataPrt(), src, sizeof(float) * size());	
 	}
 }
 template<>
@@ -250,7 +259,7 @@ template<>
 void matCore<float, true>::load(const double * src, bool cuda = false){
 	if(cuda){
 		cuWrap::memDd2Df(dataPrt(), src, size());
-		
+
 	}else{
 		cuWrap::memHd2Df(dataPrt(), src, size());		
 	}
@@ -389,7 +398,7 @@ bool matCore<TYPE, CUDA>::isVect() const{
 }
 template <typename TYPE, bool CUDA>
 void  matCore<TYPE, CUDA>::loadMat(const TYPE * src, bool cuda){
-	memRealise();
+	memRealise(true);
 	load(src, cuda);
 }
 template <typename TYPE, bool CUDA>

@@ -98,7 +98,7 @@ mnist::mnist(string path){
 	fin.close();
 }
 
-void mnist::show(int idx,char type,bool label_show){
+void mnist::showImg(int idx,char type,bool label_show){
 	float **&ipt=(type=='i')?input:input_t;
 	//float **&lbl=(type=='i')?label:label_t;
 	cout<<"\n";
@@ -156,7 +156,7 @@ void mnist::check(){
 		idx=input_idx(type);
 		if(idx==-1)break;
 		if(idx==-2)continue;
-		show(idx,type);
+		showImg(idx,type);
 	}while(1);
 }
 int mnist::value(float *tgt){
@@ -203,7 +203,7 @@ void mnist::show_wrong(float *out,char mod){
 		int o=get_out_value(out+output_num*i);
 		if(v==o)count++;
 		else{
-			show(i,mod);
+			showImg(i,mod);
 			show_out(out+output_num*i);
 			getchar();
 		}

@@ -6,7 +6,7 @@ private:
 	float **input_t;
 	int rows;
 	int columns;
-	void show(int idx,char type,bool label_show=true);
+	void showImg(int idx,char type,bool label_show=true);
 	int input_idx(char type);
 	int value(float *tgt);
 	int value(int idx,char mod);

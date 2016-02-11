@@ -1,21 +1,23 @@
 template <typename TYPE, bool CUDA>
 class sinSample: public dataSetBase<TYPE, CUDA>{
 public:
-	sinSample(int num, int crossNum, bool rand){
-		init(1, 1, LINEAR, rand, crossNum);
-		load(num);
+	int dtNum;
+	sinSample(int num){
+		init(1, 1);
+		set("activeFunc", LINEAR);
+		dtNum = num;
 	}
-	void loadData(){		
-		TYPE *tX = new TYPE[dataNum];
-		TYPE *tT = new TYPE[dataNum];
-		for(int i = 0; i<dataNum; i++){
+	void createSamples(){		
+		TYPE *tX = new TYPE[dtNum];
+		TYPE *tT = new TYPE[dtNum];
+		for(int i = 0; i<dtNum; i++){
 			tX[i] = 3.1415 * TYPE(Mrand(10000) -5000)/10000;
 			tT[i] = sin(tX[i]);
 		}
-		X0[0].importData(tX);
-		T0[0].importData(tT);
+		loadSamples(tX, tT, dtNum);
+		delete [] tX;
+		delete [] tT;
 	}
-
 	void showResult(){
 		MatGroup<TYPE, CUDA> cY(Yv, seriesLen);
 		MatGroup<TYPE, CUDA> cT(Tv, seriesLen);
@@ -24,20 +26,18 @@ public:
 	virtual void showValidsResult(MatGroup<TYPE, CUDA> &T, MatGroup<TYPE, CUDA> &Y){
 		cout<<"\ncorr:"<<T.correl(Y);
 	};
-
 };
 
 #include "sampleDataSet/mnist.h"
 template <bool CUDA>
 class mnistSample: public dataSetBase<float, CUDA>, mnist{
 public:
-	mnistSample(bool rand, int crossNum, string path):mnist(path){
-		init(input_num, output_num, SIGMOID, rand, crossNum);
-		load(train_num);
+	mnistSample(string path):mnist(path){
+		init(input_num, output_num);
+		set("activeFunc", SIGMOID);		
 	}
-	void loadData(){		
-		X0[0].importData(data);
-		T0[0].importData(label_d);		
+	void createSamples(){	
+		loadSamples(data, label_d, train_num);
 	}
 	void showResult(){	
 		float * Yd;
@@ -68,12 +68,9 @@ public:
 };
 template <typename TYPE, bool CUDA>
 class singleSeries: public seriesDataBase<TYPE, CUDA>{
-private:
+protected:
 	string path;
-	//	MatGroup fixT;
-	//MatGroup fixY;
-	int currentValidIdx;
-	int loadSeries(){//返回dtNum
+	void createSamples(){//返回dtNum
 		if(!fileIsExist(path)){
 			Assert("\n文件不存在:" + path);
 		}
@@ -85,24 +82,15 @@ private:
 		}
 		fl.close();
 		int allLen = ret.size()-1;
-		srcX = new TYPE[allLen];
-		srcT = new TYPE[allLen];
-		memcpy(srcX, ret.data(), _msize(srcX));
-		memcpy(srcT, ret.data() + 1, _msize(srcT));
-		int dtNum = (allLen - preLen)/(seriesLen - preLen);
-		cutSeries(dtNum);
-		return dtNum;
+		loadSamples(ret.data(), ret.data() + 1, 1, ret.size() - 1);		
 	}
 public:
-	singleSeries(bool rand, int _seriLen, int _preLen, int _crossNum,  string _path):seriesDataBase(_preLen){
-		init(1, 1, LINEAR, rand, _crossNum, _seriLen);
+	singleSeries(string _path):seriesDataBase(){		
+		init(1, 1);		
+		set("activeFunc",LINEAR);
 		path = _path;
-		load();
-		currentValidIdx = -1;
-	}	
-	void showResult(){
-		showValidCorrel();
-	}
+		
+	}		
 	void pauseAction(){
 		string s;
 		cout<<"输入s保存csv";
@@ -110,6 +98,9 @@ public:
 		if(s[0] == 's'){
 			outputValidCsv("f:\\signlecsv.csv");
 		}
+	}
+	void showResult(){
+		showValidCorrel();
 	}
 	virtual void showValidsResult(MatGroup<TYPE, CUDA> &T, MatGroup<TYPE, CUDA> &Y){
 		cout<<"\ncorr:"<<T.correl(Y);
@@ -120,10 +111,10 @@ template <typename TYPE, bool CUDA>
 struct stockIndex:public seriesDataBase<TYPE, CUDA>{
 private:
 	string path;
-	int loadSeries(){//返回dtNum
-		ifstream fl(path, ios::binary);
+	void createSamples(){//返回dtNum
 		int all_len;
 		int input_dimen;
+		ifstream fl(path, ios::binary);
 		fl.read((char *) & all_len, sizeof(int));
 		fl.read((char *) & input_dimen, sizeof(int));
 		TYPE * tmp = new TYPE[all_len * input_dimen];
@@ -135,16 +126,16 @@ private:
 		x = x.removeRightCols();
 		t = t.removeLeftCols();
 		all_len --;
-		srcX = new TYPE[all_len * inputNum];
-		srcT= new TYPE[all_len * outputNum];
+		TYPE * srcX = new TYPE[all_len * inputNum];
+		TYPE * srcT = new TYPE[all_len * outputNum];
 		x.exportData(srcX);
 		t.exportData(srcT);
-		int dtNum = (all_len - preLen)/(seriesLen - preLen);
-		cutSeries(dtNum);
-		return dtNum;
+		loadSamples(srcX, srcT, 1, all_len);
+		delete [] srcX;
+		delete [] srcT;
 	}	
 public:
-	stockIndex(bool rand, int _seriLen, int _preLen, int _crossNum,  string _path):seriesDataBase(_preLen){
+	stockIndex( string _path):seriesDataBase(){
 		path = _path;
 		ifstream fl(path, ios::binary);
 		if( !fl){
@@ -154,8 +145,8 @@ public:
 		fl.read((char *) & input_num, sizeof(int));
 		fl.read((char *) & input_num, sizeof(int));
 		fl.close();
-		init(input_num, 1, LINEAR, rand, _crossNum, _seriLen);
-		load();
+		init(input_num, 1);
+		set("activeFunc",LINEAR);
 		maxCorr = -2;
 	}	
 	void showResult(){

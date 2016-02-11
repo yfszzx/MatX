@@ -92,13 +92,13 @@ public:
 	inline MatriX operator * (TYPE val) const;
 	inline MatriX & operator *= (TYPE val);
 	inline MatriX & operator /= (TYPE val);
-	inline MatriX & operator += (TYPE val);
-	inline MatriX & operator -= (TYPE val);
+	inline MatriX & operator += (TYPE val);//效率待改进
+	inline MatriX & operator -= (TYPE val);//效率待改进
 	inline MatriX operator / (TYPE val) const;
 	inline MatriX operator + (const MatriX<TYPE, CUDA> &mat) const;
 	inline MatriX operator - (const MatriX<TYPE, CUDA> &mat) const;
-	inline MatriX operator + (TYPE val) const;
-	inline MatriX operator - (TYPE val) const;
+	inline MatriX operator + (TYPE val) const;//效率待改进
+	inline MatriX operator - (TYPE val) const;//效率待改进
 	inline MatriX & operator += (const MatriX<TYPE, CUDA> &mat);
 	inline MatriX & operator -= (const MatriX<TYPE, CUDA> &mat);
 	MatriX cwiseProduct(const MatriX<TYPE, CUDA> &mat) const;
@@ -166,7 +166,7 @@ public:
 	TYPE allMin() const;
 
 	//others
-	MatriX<TYPE, CUDA> &importData(TYPE * src, bool cuda = false);
+	MatriX<TYPE, CUDA> &importData(const TYPE * src, bool cuda = false);
 	void exportData(TYPE * & dt, bool cuda = false) const;
 	void save(ofstream & fl) const;
 	void read(ifstream & fl);
