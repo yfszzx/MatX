@@ -207,7 +207,7 @@ void matCore<TYPE, CUDA>::copyRealise(bool sclRealise, bool trnRealise){
 }
 
 template<>
-void matCore<double, true>::load(const double * src, bool cuda = false){
+void matCore<double, true>::load(const double * src, bool cuda){
 	if(cuda){
 		cuWrap::memD2D(dataPrt(), src, sizeof(double) * size());		
 	}else{
@@ -215,7 +215,7 @@ void matCore<double, true>::load(const double * src, bool cuda = false){
 	}
 }
 template<>
-void matCore<double, false>::load(const double * src, bool cuda = false){
+void matCore<double, false>::load(const double * src, bool cuda){
 	if(cuda){
 		cuWrap::memD2H(dataPrt(), src, sizeof(double) * size());
 	}else{
@@ -223,7 +223,7 @@ void matCore<double, false>::load(const double * src, bool cuda = false){
 	}
 }
 template<>
-void matCore<float, true>::load(const float * src, bool cuda = false){
+void matCore<float, true>::load(const float * src, bool cuda){
 	if(cuda){
 		cuWrap::memD2D(dataPrt(), src, sizeof(float) * size());		
 	}else{
@@ -231,7 +231,7 @@ void matCore<float, true>::load(const float * src, bool cuda = false){
 	}
 }
 template<>
-void matCore<float, false>::load(const float * src, bool cuda = false){
+void matCore<float, false>::load(const float * src, bool cuda){
 	if(cuda){
 
 		cuWrap::memD2H(dataPrt(), src, sizeof(float) * size());
@@ -240,7 +240,7 @@ void matCore<float, false>::load(const float * src, bool cuda = false){
 	}
 }
 template<>
-void matCore<double, false>::load(const float * src, bool cuda = false){
+void matCore<double, false>::load(const float * src, bool cuda){
 	if(cuda){
 		cuWrap::memDf2Hd(dataPrt(), src, size());		
 	}else{
@@ -248,7 +248,7 @@ void matCore<double, false>::load(const float * src, bool cuda = false){
 	}
 }
 template<>
-void matCore<float, false>::load(const double * src, bool cuda = false){
+void matCore<float, false>::load(const double * src, bool cuda){
 	if(cuda){
 		cuWrap::memDd2Hf(dataPrt(), src, size());
 	}else{
@@ -256,7 +256,7 @@ void matCore<float, false>::load(const double * src, bool cuda = false){
 	}
 }
 template<>
-void matCore<float, true>::load(const double * src, bool cuda = false){
+void matCore<float, true>::load(const double * src, bool cuda){
 	if(cuda){
 		cuWrap::memDd2Df(dataPrt(), src, size());
 
@@ -265,7 +265,7 @@ void matCore<float, true>::load(const double * src, bool cuda = false){
 	}
 }
 template<>
-void matCore<double, true>::load(const float * src, bool cuda = false){
+void matCore<double, true>::load(const float * src, bool cuda){
 	if(cuda){
 		cuWrap::memDf2Dd(dataPrt(), src, size());
 
@@ -336,7 +336,7 @@ void  matCore<TYPE, CUDA>::transposeRealise(){
 	if(CUDA){
 		cuWrap::transpose(rowsNum, colsNum, dataPrt(),  sizeNum);
 	}else{
-		eigenMat tmp = eMat().transpose();
+		eigenMat tmp =  eMat().transpose();		
 		eMat() = tmp;
 	}
 	transFlag = false;

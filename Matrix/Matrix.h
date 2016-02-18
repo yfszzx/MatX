@@ -167,10 +167,11 @@ public:
 
 	//others
 	MatriX<TYPE, CUDA> &importData(const TYPE * src, bool cuda = false);
-	void exportData(TYPE * & dt, bool cuda = false) const;
+	void exportData(TYPE * dt, bool cuda = false) const;
+	TYPE * getData(bool cuda = false) const;
 	void save(ofstream & fl) const;
 	void read(ifstream & fl);
-	string str(){
+	string str() const{
 		return matCore::str();
 	}
 

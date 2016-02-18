@@ -91,16 +91,8 @@ void ANNBase<TYPE, CUDA>::setConfigValue(int idx, float val){
 }
 template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::initConfigValue(){
-	subConfigsNum = -1;
 	annInitConfigValue();
-	for(int i = 0; i < 100; i++){
-		if(configName[i].size()>0){
-			if(subConfigsNum < i){
-				subConfigsNum = i;
-			}
-		}
-	}
-	subConfigsNum ++;
+	subConfigsNum = configRecorder.size();
 	initSet(subConfigsNum, "debug", false);
 	initSet(subConfigsNum + 1, "alg", 3);
 	initSet(subConfigsNum + 2, "lr", 0.5);

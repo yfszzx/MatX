@@ -1,3 +1,9 @@
+#define Dbg(x) cout<<endl<<(x);Global_debug( __LINE__, __FILE__);
+#define Dbg2(x,y) cout<<endl<<(x)<<"\t"<<(y);Global_debug( __LINE__, __FILE__);
+#define Dbg3(x,y,z) cout<<endl<<(x)<<"\t"<<(y)<<"\t"<<(z);Global_debug( __LINE__, __FILE__);
+#define Dbg4(x1,x2,x3,x4) cout<<endl<<(x1)<<"\t"<<(x2)<<"\t"<<(x3)<<"\t"<<(x4);Global_debug( __LINE__, __FILE__);
+#define Dbg5(x1,x2,x3,x4,x5) cout<<endl<<(x1)<<"\t"<<(x2)<<"\t"<<(x3)<<"\t"<<(x4)<<"\t"<<(x5);Global_debug( __LINE__, __FILE__);
+#define Dbg6(x1,x2,x3,x4,x5,x6) cout<<endl<<(x1)<<"\t"<<(x2)<<"\t"<<(x3)<<"\t"<<(x4)<<"\t"<<(x5)<<"\t"<<(x5);Global_debug( __LINE__, __FILE__);
 namespace matrixGlobal{
 	void Global_debug(int line, const char *file){
 		cout << "\ndebug at line:" << line << "  file:" << file <<endl;

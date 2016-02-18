@@ -57,8 +57,20 @@ namespace ANNGlobal{
 		fl.close();
 		return ret;
 	}
-
-
+	void checkFold(string path)	{
+		struct _stat fl;
+		string t = path;
+		int i=path.size();
+		if(t[i-1]=='\\'){
+			t[i-1]=0;
+		}
+		if (!((_stat(t.c_str(), &fl) == 0) && (fl.st_mode & _S_IFDIR))){
+			if(_mkdir(path.c_str()) !=0){
+				Assert("无法创建文件夹："+ path);
+			}
+		}
+	}
+	const static int NullValid = -1;
 }
 using namespace ANNGlobal;
 template <typename TYPE, bool CUDA>

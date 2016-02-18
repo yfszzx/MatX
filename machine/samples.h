@@ -19,9 +19,7 @@ public:
 		delete [] tT;
 	}
 	void showResult(){
-		MatGroup<TYPE, CUDA> cY(Yv, seriesLen);
-		MatGroup<TYPE, CUDA> cT(Tv, seriesLen);
-		cout<<"\ncorrel:"<<cY.correl(cT);
+		cout<<"\ncorrel:"<<Yv[0].correl(Tv[0]);
 	}
 	virtual void showValidsResult(MatGroup<TYPE, CUDA> &T, MatGroup<TYPE, CUDA> &Y){
 		cout<<"\ncorr:"<<T.correl(Y);
@@ -40,10 +38,8 @@ public:
 		loadSamples(data, label_d, train_num);
 	}
 	void showResult(){	
-		float * Yd;
-		float * Td;
-		Tv[0].transpose().exportData(Td);
-		Yv[0].transpose().exportData(Yd);
+		float * Yd = Y[0].T().getData();
+		float * Td = T[0].T().getData();
 		accuracy(Yd, Td, validNum);
 		delete [] Yd;
 		delete [] Td;
@@ -53,15 +49,14 @@ public:
 		int num = 0;
 		cout<<"\n";
 		for(int i = 0 ; i < T.num(); i++){
-			float * Yd;
-			float * Td;
-			T[i].T().exportData(Td);
-			Y[i].T().exportData(Yd);
+			float * Td = (T[i].T()).getData();
+			float * Yd = (Y[i].T()).getData();
 			ret += accuracy(Yd, Td, T[i].rows()) * T[i].rows();
 			num +=   T[i].rows();
 			cout<<"\n";
 			delete [] Yd;
 			delete [] Td;
+			getchar();
 		}
 		cout<<"\naccuracy"<<(ret/num);
 	};

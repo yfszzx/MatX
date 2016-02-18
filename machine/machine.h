@@ -11,16 +11,16 @@
 #include "ELM.h"
 #include "ESN.h"
 #include "PCA.h"
+#include "SVM.h"
+#include "PLS.h"
+#include "LSTM.h"
+#include "STD.h"
 
 #include "dataSetBaseRealise.h"
 #include "searchToolRealise.h"
 #include "machineBaseRealise.h"
 #include "ANNBasePrivate.h"
 #include "ANNBasePublic.h"
-//#include "MLPRealise.h"
-//#include "seriesDataBaseRealise.h"
-//#include "RNNRealise.h"
-//#include "ELMRealise.h"
 #include "samples.h"
 
 

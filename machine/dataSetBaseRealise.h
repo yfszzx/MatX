@@ -1,38 +1,58 @@
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::makeTrainAndValidList(int * &valid, int * &train){
 	validNum = 0;
+	trainNum = 0;
+	vector<char> list;
 	for(int i = 0; i<dataNum; i++){
-		if(validBoolList[i]){
-			validNum ++;
+		if(validBoolList[i] == 1){
+			if(rand()%1000 < validNumScale * 1000){
+				validNum ++;
+				list.push_back(true);
+			}else{
+				list.push_back(false);
+			}
+		}else if(validBoolList[i] == 0){
+			trainNum ++;
 		}
-	}				
-	train = new int[dataNum -  validNum ];
+	}	
+	train = new int[ trainNum ];
 	valid = new int[ validNum ];
 	int c_t = 0;
 	int c_v = 0;
+	int pos = 0;
 	for(int i = 0; i<dataNum; i++){
-		if(validBoolList[i]){
-			valid[c_v] = i;
-			c_v++;
-		}else{
+		if(validBoolList[i] == 1){
+			if(list[pos]){
+				valid[c_v] = i;
+				c_v++;
+			}
+			pos ++;
+		}else if(validBoolList[i] == 0){
 			train[c_t] = i;
 			c_t++;
 		}
 	}
-	trainNum = dataNum - validNum;
+	if(validSampleList != NULL){
+		delete [] validSampleList;
+	}
+	validSampleList = new char[list.size()];
+	memcpy(validSampleList, list.data(), _msize(validSampleList));
+
 }
 template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::makeValid( ){
+void dataSetBase<TYPE, CUDA>::makeValid(){
+	makeValidList(validFoldIdx);
 	int *validList;
 	makeTrainAndValidList(validList, trainList);
 	validInitLoss = 0;
 	for(int i = 0; i< seriesLen; i ++){
-		Xv[i] = X0[i].colsMapping(validList, validNum).transpose();
-		Tv[i] = T0[i].colsMapping(validList, validNum).transpose();
+		Xv[i] = X0[i].colsMapping(validList, validNum).T();
+		Tv[i] = T0[i].colsMapping(validList, validNum).T();
 		validInitLoss += Tv[i].allMSE()/2;
 	}		
 	validInitLoss /= seriesLen;
 	delete [] validList;
+
 }
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::initDataSpace(){
@@ -55,9 +75,9 @@ void dataSetBase<TYPE, CUDA>::initDataSpace(){
 
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::makeBatch(int size){
-	if(validFoldIdx == -1){
+	/*if(validFoldIdx == -1){
 		Assert("还未设置训练集和验证集,执行makeValid(int validIdx)设置");
-	}
+	}*/
 	batchInitLoss = 0;
 	if(randBatch){
 		batchSize = size;
@@ -87,22 +107,35 @@ void dataSetBase<TYPE, CUDA>::makeBatch(int size){
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::init(int iptNum, int optNum){
 	inputNum = iptNum;
-	outputNum = optNum;
+	outputNum = optNum;	
 }
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::makeValid(int validIdx){
-	if(validIdx < 0 || validIdx >= crossFolds){
-		Assert("验证集序号超出范围");
-	}
-	if(validBoolList != NULL){
-		delete [] validBoolList;
-		delete [] trainList;
-	}
-	validBoolList = new bool[dataNum];
-	makeValidList(validIdx);
-	makeValid();
 	validFoldIdx = validIdx;
-	maxCorr = -1;
+	if(validIdx != NullValid){
+		if(validIdx < 0 || validIdx >= crossFolds){
+			Assert("验证集序号超出范围");
+		}
+		if(validBoolList != NULL){
+			delete [] validBoolList;
+			delete [] trainList;
+		}
+		validBoolList = new char[dataNum];
+	
+		makeValid();	
+		maxCorr = -1;
+	}else{
+		if(trainList != NULL){
+			delete [] trainList;
+		}
+		trainList = new int[ dataNum ];
+		for(int i = 0; i<dataNum; i++){
+			trainList[i] = i;
+		}
+		validInitLoss = 1;
+		trainNum = dataNum;
+		validNum = 0;
+	}
 }
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::loadBatch(){
@@ -110,6 +143,14 @@ void dataSetBase<TYPE, CUDA>::loadBatch(){
 		X[i] = Xhost[i];
 		T[i] = Thost[i];
 	}
+}
+template <typename TYPE, bool CUDA>
+void dataSetBase<TYPE, CUDA>::loadDatas(){
+	createSamples();
+	if(dataNum < crossFolds){
+		crossFolds = dataNum;
+	}
+	loatTestSamples();
 }
 template <typename TYPE, bool CUDA>
 dataSetBase<TYPE, CUDA>::dataSetBase(){
@@ -124,10 +165,11 @@ dataSetBase<TYPE, CUDA>::dataSetBase(){
 	preLen = 0;
 	seriesLen = 1;
 	randBatch = false;
-	crossFolds = 1;
-	supervise = true;
+	crossFolds = 5;
 	actFunc = LINEAR;
 	seriesMod = false;
+	validNumScale = 1;
+	validSampleList = NULL;	
 }
 template <typename TYPE, bool CUDA>
 dataSetBase<TYPE, CUDA>::~dataSetBase(){
@@ -147,6 +189,9 @@ dataSetBase<TYPE, CUDA>::~dataSetBase(){
 		delete [] Xhost;
 		delete [] Thost;
 	}
+	if(validSampleList != NULL){
+		delete [] validSampleList;
+	}
 }
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::loadSamples(const TYPE * _X, const TYPE * _T, int _dataNum){
@@ -156,7 +201,14 @@ void dataSetBase<TYPE, CUDA>::loadSamples(const TYPE * _X, const TYPE * _T, int 
 	dataNum = _dataNum;
 	initDataSpace();
 	X0[0].importData(_X);
-	T0[0].importData(_T);
+	T0[0].importData(_T);	
+	MatX tmpX;
+	MatX tmpY;
+	for(int i = 0; i < pretreatment.size(); i++){
+		tmpX = X0[0].T();		
+		pretreatment[i]->predict(&tmpY, &tmpX);
+		X0[0] = tmpY.T();
+	}	
 };
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::makeValidList(int vldIdx){		
@@ -169,38 +221,37 @@ template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::show(){
 	cout<<"\ninputNum:"<<inputNum<<"\toutputNum:"<<outputNum<<"\trandBatch："<<randBatch;
 	cout<<"\ncrossFolds:"<<crossFolds<<"\tvalidIdx:"<<validFoldIdx<<"\tdataNum:"<<dataNum<<"\ttrainNum:"<<trainNum<<"\tvalidNum"<<validNum;
-	cout<<"\nsupervise:"<<supervise;
 	cout<<"\nactFunc"<<actFunc;
 }
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::showValidCorrel(){
 	float corr;
 	if(preLen == 0){
-		 corr = Yv[0].correl(Tv[0]);
+		corr = Yv[0].correl(Tv[0]);
 	}else{
 
-	double ysum = 0; 
-	double tsum = 0;
-	double dot = 0;
-	double ysn = 0;
-	double tsn = 0;
-	int n = 0;
-	for(int i = preLen ; i < seriesLen; i++){
-		ysum += Yv[i].allSum();
-		tsum += Tv[i].allSum();
-		dot += Yv[i].dot(Tv[i]);
-		ysn += Yv[i].squaredNorm();
-		tsn += Tv[i].squaredNorm();
-		n += Yv[i].size();
+		double ysum = 0; 
+		double tsum = 0;
+		double dot = 0;
+		double ysn = 0;
+		double tsn = 0;
+		int n = 0;
+		for(int i = preLen ; i < seriesLen; i++){
+			ysum += Yv[i].allSum();
+			tsum += Tv[i].allSum();
+			dot += Yv[i].dot(Tv[i]);
+			ysn += Yv[i].squaredNorm();
+			tsn += Tv[i].squaredNorm();
+			n += Yv[i].size();
+		}
+		corr =  (n * dot - ysum * tsum)/sqrt(( n * ysn - ysum * ysum) *( n * tsn - tsum * tsum));
 	}
-	corr =  (n * dot - ysum * tsum)/sqrt(( n * ysn - ysum * ysum) *( n * tsn - tsum * tsum));
-	}
-	
+
 	if(maxCorr == -1 || maxCorr< corr){
 		if(_finite(corr)){
 			maxCorr = corr;
 		}
-	
+
 	}
 	cout<<"\ncorrel:"<<corr<<"\tmaxCorr"<<maxCorr;
 }
@@ -230,13 +281,13 @@ void dataSetBase<TYPE, CUDA>::set(string name, float val){
 		randBatch = val;
 		return;
 	}
-
 	if(name == "crossFolds"){
-		crossFolds = val;
-		return;
+			crossFolds = val;
+			return;
 	}
-	if(name == "supervise"){
-		supervise = val;
+
+	if(name == "validNumScale"){
+		validNumScale = val;
 		return;
 	}
 	if(name == "activeFunc"){
@@ -259,4 +310,10 @@ void dataSetBase<TYPE, CUDA>::set(string name, float val){
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::operator()(string name, float val){
 	set(name, val);
+}
+template <typename TYPE, bool CUDA>
+void dataSetBase<TYPE, CUDA>::setPretreat(MachineBase<TYPE, CUDA> * pre){
+	pretreatment.push_back(pre);
+	pre->predictInit();
+
 }

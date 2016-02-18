@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <string>
 #include <math.h>
+#include <direct.h>
+#include <sys\stat.h> 
 #include "Eigen/Eigen/Dense"
 using namespace Eigen;
 using namespace std;

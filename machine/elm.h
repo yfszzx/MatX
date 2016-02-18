@@ -37,13 +37,13 @@ protected:
 		Wout =  MatX::Zero(nodes + 1, outputNum);
 		Mach<<Win<<Wout;
 	};
+	virtual int getBatchSize(){
+		return dt.trainNum  * batchScale;
+	}
 	virtual void predictCore( MatX * _Y,  MatX* _X, int len = 1){
 		MatX ones = MatX::Ones(_X[0].rows());
 		_Y[0] = tanh(_X[0] * Win).colJoint(ones) * Wout;
 	};
-	virtual int getBatchSize(){
-		return dt.trainNum  * batchScale;
-	}
 	virtual void trainHead(){
 		Woutd = MatX::Zero(nodes + 1, outputNum);
 	};
@@ -59,13 +59,13 @@ protected:
 		Woutd.add(Wout);	
 		dt.Y[0] = hide * Wout;
 		cout<<"\ndataLoss"<<(dt.Y[0] -dt.T[0]).squaredNorm()/batchSize/2/batchInitLoss;		
-		cout<<"\nLoss:"<<getValidLoss()/dt.validInitLoss;
-		dt.showResult();
+		cout<<"\nLoss:"<<getValidLoss()/dt.validInitLoss;		
 		return !( trainCount < trainRounds);
 	};
 	virtual void trainTail(){
 		Wout = Woutd/trainRounds;
 		setBestMach();
+		dt.showResult();
 	}
 public:
 	ELM(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){

@@ -12,16 +12,25 @@ ostream & operator <<(ostream &os, const MatriX<TYPE, CUDA> &m){
 }
 
 template <typename TYPE, bool CUDA>
-void MatriX<TYPE, CUDA>::exportData(TYPE * & dt, bool cuda) const{
+void MatriX<TYPE, CUDA>::exportData(TYPE *  dt, bool cuda) const{
 	MatriX<TYPE, false> tmp = *this;
 	tmp.copyRealise(true, true);
-	if(cuda){
-		cuWrap::malloc((void **)& dt, sizeof(TYPE) * size());
+	if(cuda){		
 		cuWrap::memH2D(dt, tmp.dataPrt(),  sizeof(TYPE) * size());
 	}else{
-		dt = new TYPE[size()];
 		memcpy(dt, tmp.dataPrt(), _msize(dt));
 	}
+}
+template <typename TYPE, bool CUDA>
+TYPE * MatriX<TYPE, CUDA>::getData(bool cuda) const{
+	TYPE * ret;
+	if(cuda){
+		cuWrap::malloc((void **)& ret, sizeof(TYPE) * size());
+	}else{
+		ret = new TYPE[size()];
+	}
+	exportData(ret, cuda);
+	return ret;
 }
 template <typename TYPE, bool CUDA>
 void MatriX<TYPE, CUDA>::save(ofstream & fl) const{

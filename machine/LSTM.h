@@ -1,5 +1,5 @@
 template <typename TYPE, bool CUDA>
-class RNN:public ANNBase<TYPE, CUDA>{
+class LSTM:public ANNBase<TYPE, CUDA>{
 protected:
 	MatX Win;
 	MatX Wout;
@@ -79,7 +79,7 @@ protected:
 		Bout =  MatX::Random(1, outputNum)/1000;
 		Wjnt =  MatX::Random(nodes, nodes)/1000;
 		Mach<<Win<<Wout<<Wjnt<<Bin<<Bout;	
-		
+
 	}
 	virtual void predictCore( MatX * _Y,  MatX* _X, int len = 1) {
 		MatX st = tanh(_X[0] * Win + Bin);
@@ -101,14 +101,13 @@ protected:
 		}
 	}
 public:	
-	RNN(seriesDataBase<TYPE, CUDA> & dtSet, string path):ANNBase<TYPE, CUDA>(dtSet, path){	
-	 initConfig();
-	 hide = NULL;
+	LSTM(seriesDataBase<TYPE, CUDA> & dtSet, string path):ANNBase<TYPE, CUDA>(dtSet, path){	
+		initConfig();
+		hide = NULL;
 	};
-	~RNN(){
+	~LSTM(){
 		if(hide != NULL){
 			delete [] hide;
 		}
 	}
 };
-

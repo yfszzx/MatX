@@ -37,7 +37,7 @@ void ANNBase<TYPE, CUDA>::showAndRecord(){
 		vldLoss = 1;
 	}
 	rcdFile<<trainCount<<","<<trnLoss<<","<<vldLoss<<","<<minValidLoss<<","<<batchTrainRounds<<","<<batchSize<<","<<Search.getZ()<<","<<tm<<endl;
-	dt.showResult();
+	//dt.showResult();
 }
 template <typename TYPE, bool CUDA>
 bool ANNBase<TYPE, CUDA>::stepRecord(){
