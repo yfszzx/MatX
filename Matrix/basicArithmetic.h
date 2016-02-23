@@ -91,33 +91,32 @@ MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseQuotient (const MatriX<TYPE, CUDA> 
 	if(mat.size() != size()){
 		Assert("矩阵大小不匹配,无法进行cwiseProduct运算");	
 	}
-	MatriX<TYPE, CUDA> ret(*this, STRU);
+	MatriX<TYPE, CUDA> ret(mat, SCL);
 	if(CUDA){
 		if(trans() == mat.trans()){
-			cuWrap::quotient(dataPrt(),  mat.dataPrt(), ret.dataPrt(), size());
-		}else{
-			MatriX<TYPE, CUDA> tmp(mat, TURN);
-			cuWrap::quotient(dataPrt(), tmp.dataPrt(), ret.dataPrt(), size());
+			cuWrap::quotient(dataPrt(),  ret.dataPrt(), ret.dataPrt(), size());
+		}else{			
+			MatriX<TYPE, CUDA> tmp(*this, TURN);
+			cuWrap::quotient(tmp.dataPrt(), ret.dataPrt(), ret.dataPrt(), size());
 		}
 	}else{
 		if(trans() == mat.trans()){
-			ret.eMat() =  eMat().cwiseQuotient(mat.eMat());			
+			ret.eMat() =  eMat().cwiseQuotient(ret.eMat());			
 		}else{
-			ret.eMat() =  eMat().cwiseQuotient(mat.eMat().transpose());				
+			ret.eMat() =  eMat().cwiseQuotient(ret.eMat().transpose()).transpose();				
 		}
 	}
-	ret.scale =   scale / mat.scale;
+	ret.scale =   scale ;
 	return ret;
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> MatriX< TYPE,CUDA>::cwiseInverse () const{
-	MatriX<TYPE, CUDA> ret(*this, STRU);
+	MatriX<TYPE, CUDA> ret(*this, SCL);
 	if(CUDA){
-		cuWrap::cwiseInverse(ret.dataPrt(), dataPrt(), size());
+		cuWrap::cwiseInverse(ret.dataPrt(), ret.dataPrt(), size());
 	}else{
-		ret.eMat() =  eMat().cwiseInverse();					
+		ret.eMat() =  ret.eMat().cwiseInverse();					
 	}
-	ret.scale = 1.0f/scale;
 	return ret;
 }
 template <typename TYPE, bool CUDA>
@@ -271,17 +270,15 @@ MatriX<TYPE,CUDA> MatriX<TYPE,CUDA>::inverse()  const{
 };
 template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> MatriX<TYPE,CUDA>::inv() const{
-	MatriX<TYPE, CUDA> ret = *this;
-	ret.copyRealise(false, false);
+	MatriX<TYPE, CUDA> ret(*this, SCL);
 	if(CUDA){		
 		eigenMat tmp(realRows(), realCols());
-		cuWrap::memD2H(tmp.data(), dataPrt(), sizeof(TYPE) * size());
+		cuWrap::memD2H(tmp.data(), ret.dataPrt(), sizeof(TYPE) * size());
 		tmp = tmp.inverse();
 		cuWrap::memH2D(ret.dataPrt(), tmp.data(), sizeof(TYPE) * size());	
 	}else{
 		ret.eMat() = ret.eMat().inverse();	
 	}
-	ret. scale = 1/ret.scale;
 	return ret;
 
 };

@@ -2,24 +2,31 @@ template <typename TYPE, bool CUDA>
 class PCA:public MachineBase<TYPE, CUDA>{	
 private:	
 	MatX means;
-	MatX var;
+	MatX dev;
 	MatX covMat;
 	MatX eigenVals;
 	MatX eigenVects;
-	MatX rotMat;
+	
 
 	MatXD meansD;
-	MatXD varD;
+	MatXD devD;
 	MatXD covMatD;
 	MatXD meansTmp;
-	MatXD varTmp;
+	MatXD devTmp;
 	MatXD covMatTmp;
+	MatX rotMat;
 	int trainRounds;
-	float batchScale;
+	float batchNum;
+	float varLoss;
+	bool showResult;
+
+	bool trainMod;
 protected:
 	virtual void initConfigValue(){
 		initSet(0, "trainRounds",50);
-		initSet(1, "batchScale",0.1);		
+		initSet(1, "batchNum",0.1);	
+		initSet(2, "varLoss",0);	
+		initSet(3, "showResult",0);	
 	};
 	virtual void setConfigValue(int idx, float val){
 		switch(idx){
@@ -27,24 +34,48 @@ protected:
 			trainRounds = val;
 			break;
 		case 1:
-			batchScale = val;
+			batchNum= val;
 			break;
+		case 2:
+			varLoss = val;
+			break;
+		case 3:
+			showResult = val;
+			break;
+		}
+
+	};
+	virtual void initMachine(){
+		Mach<<means<<dev<<covMat<<eigenVals<<eigenVects;
+	};
+	virtual void predictHead(){
+		double varV = 0;
+		float varTotal = eigenVals.allSum();
+		vector<int >list;
+		for(int i = 0; i< dt.inputNum; i++){
+			varV += eigenVals[i];
+			if(varV >= varTotal * varLoss){
+				list.push_back(i);
+
+			}
+		}
+		rotMat = MatX::Diagonal(dev.cwiseInverse()) * eigenVects.colsMapping(list.data(), list.size());
+		unsuperviseDim = list.size();
+		cout<<"\n保留方差比例:"<<(1.0f - varLoss)<<"\t保留维度:"<<unsuperviseDim<<"/"<<inputNum;
+	};
+	virtual void predictCore( MatX * _Y,  MatX* _X, int len = 1){	
+		for(int i = 0; i< len; i++){
+			_Y[i] = (_X[i] - means) * MatX::Diagonal(dev.cwiseInverse());
+			_Y[i] = _Y[i] * eigenVects;
 		}
 		
 	};
-	virtual void initMachine(){
-			Mach<<means<<var<<covMat<<eigenVals<<eigenVects<<rotMat;
-	};
-	virtual void predictCore( MatX * _Y,  MatX* _X, int len = 1){	
-		_Y[0] = (_X[0] - means) * rotMat;
-	};
 	virtual int getBatchSize(){
-		return dt.trainNum  * batchScale;
+		return batchNum;
 	}
-	virtual void trainHead(){};
+
 	virtual void trainCore(){
 		int num = (dt.seriesLen - dt.preLen) * dt.X[0].rows();
-
 		meansTmp = dt.X[dt.preLen].sum();
 		for(int i = dt.preLen + 1; i<dt.seriesLen; i++){
 			meansTmp.add(dt.X[i].sum());
@@ -52,32 +83,34 @@ protected:
 		meansTmp /= num;
 		means = meansTmp;
 
+
 		MatX * dtCpy = new MatX[dt.seriesLen - dt.preLen];
 		dtCpy[0] = dt.X[dt.preLen] - means;
-		varTmp = square(dtCpy[0]).sum();
+		devTmp = square(dtCpy[0]).sum();
 		for(int i =1; i< dt.seriesLen - dt.preLen; i++){
 			dtCpy[i] = dt.X[i + dt.preLen] - means;
-			varTmp.add(square(dtCpy[i]).sum());
-
+			devTmp.add(square(dtCpy[i]).sum());
 		}
-		varTmp = sqrt(varTmp/num);
+		devTmp = sqrt(devTmp/num);
+
 		covMatTmp = dtCpy[0].T() * dtCpy[0];
 		for(int i = 1; i< dt.seriesLen - dt.preLen; i++){
 			covMatTmp.add(dtCpy[i].T() * dtCpy[i]);
 		}
+
 		covMatTmp /= num;		
-		MatXD tmp = (varTmp.T() * varTmp).cwiseInverse();
+		MatXD tmp = (devTmp.T() * devTmp).cwiseInverse();
 		covMatTmp = covMatTmp.cwiseProduct(tmp);//归一化方差
 		delete [] dtCpy;
 	}
 	virtual bool trainAssist(){
 		if(trainCount == 1){
 			meansD = meansTmp;
-			varD = varTmp;
+			devD = devTmp;
 			covMatD = covMatTmp;
 		}else{
 			meansD += meansTmp;
-			varD += varTmp;
+			devD += devTmp;
 			covMatD += covMatTmp;
 		}
 		cout<<"\n"<<trainCount;
@@ -85,15 +118,37 @@ protected:
 	};
 	virtual void trainTail(){
 		means = meansD/trainRounds;
-		var = varD/trainRounds;
+		dev = devD/trainRounds;
 		covMat = covMatD/trainRounds;
-		eigenVects = covMat.eigenSolver(eigenVals);
-		rotMat = MatX::Diagonal(var.cwiseInverse()) * eigenVects;
+		eigenVects = covMat.eigenSolver(eigenVals);		
+		if(showResult){
+			showParams();
+		}
 		setBestMach();
 	}
 public:
+	void showParams(){
+		cout<<"\nmean:";
+		cout<<means;
+		getchar();
+		cout<<"\ndev:";
+		cout<<dev;
+		getchar();
+		cout<<"\neigenValues:";
+		cout<<eigenVals.T();
+		getchar();
+		cout<<"\ncovarianceMatrix:";
+		cout<<covMat;
+		getchar();
+		cout<<"\nvectorMatrix:";
+		cout<<eigenVects;
+		getchar();
+	}
 	PCA(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){
 		initConfig();
 		unsupervise();	
 	}
+	MatX tmp;
+	MatX tmp2;
+	MatX tmp3;
 };

@@ -49,13 +49,6 @@ private:
 	inline bool matPlusVec(const MatriX<TYPE, CUDA> &vec);
 	MatriX(const MatriX<TYPE, CUDA> &m, operateType type);
 
-protected:
-	//常用函数
-	inline MatriX & tanh();
-	inline MatriX & sigm();
-	inline MatriX & square();
-	inline MatriX & abs();
-	inline MatriX & sqrt();
 public:
 
 	MatriX(int _rows = 0, int _cols = 1);
@@ -171,14 +164,21 @@ public:
 	TYPE * getData(bool cuda = false) const;
 	void save(ofstream & fl) const;
 	void read(ifstream & fl);
-	string str() const{
-		return matCore::str();
-	}
-
+	string str() const;
+	TYPE * memPrt();
+	TYPE * memPrt() const;
 	//eigenvalue
 	MatriX<TYPE, CUDA> eigenValues() const;
 	MatriX<TYPE, CUDA> eigenSolver(MatriX<TYPE, CUDA>& eigenVals) const;
 	TYPE spectralRadius() const;
+
+	//常用函数
+	inline MatriX & tanh();
+	inline MatriX & sigm();
+	inline MatriX & square();
+	inline MatriX & abs();
+	inline MatriX & sqrt();
+	
 };
 
 

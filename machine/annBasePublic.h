@@ -39,7 +39,6 @@ template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::setConfigValue(int idx, float val){
 	if(idx < subConfigsNum || subConfigsNum == -1){
 		annSetConfigValue(idx , val);
-		Search.changeBatch();
 		return;
 	}
 	idx -= subConfigsNum;
@@ -110,10 +109,30 @@ void ANNBase<TYPE, CUDA>::initConfigValue(){
 
 };
 template <typename TYPE, bool CUDA>
-ANNBase<TYPE, CUDA>::ANNBase(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){}
+ANNBase<TYPE, CUDA>::ANNBase(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){
+	subConfigsNum = -1;
+}
+
 template <typename TYPE, bool CUDA>
 int ANNBase<TYPE, CUDA>::getBatchSize(){
 	return batchSizeControlar * dt.trainNum;
+}
+template <typename TYPE, bool CUDA>
+bool ANNBase<TYPE, CUDA>::breakFlag(int cnt){
+
+	 if(cnt < int(batchTrainRounds)){
+		return true;
+	}
+	 if(cnt > int(batchTrainRounds) + 1){
+		 return false;
+	 }
+	 if(cnt == batchTrainRounds){
+		return false;
+	 }
+	 if(rand() % 100 > (batchTrainRounds - int(batchTrainRounds)) * 100){
+		 return false;
+	 }
+	 return true;
 }
 template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::trainCore(){		
@@ -130,8 +149,9 @@ void ANNBase<TYPE, CUDA>::trainCore(){
 			}
 		}else{
 			annealControll();	
-		}
-	}while(!dt.randBatch || cnt <= batchTrainRounds);
+		}		
+		
+	}while(!dt.randBatch || breakFlag(cnt));
 	
 }
 template <typename TYPE, bool CUDA>

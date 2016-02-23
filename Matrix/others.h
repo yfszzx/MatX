@@ -52,4 +52,27 @@ void MatriX<TYPE, CUDA>::read(ifstream & fl){
 	fl.read((char *)tmp.dataPrt(), sizeof(TYPE) * tmp.size());
 	*this = tmp;
 };
-
+template <typename TYPE, bool CUDA>
+string MatriX<TYPE, CUDA>::str() const{
+	return matCore::str();
+}
+template <typename TYPE, bool CUDA>
+TYPE * MatriX<TYPE, CUDA>::memPrt(){
+	if(trans()){
+		Assert("经过转置的矩阵不能使用memPrt函数");
+	}
+	if(scale != 1){
+		Assert("scale不为1的矩阵不能使用memPrt函数");
+	}
+	return dataPrt();
+};
+template <typename TYPE, bool CUDA>
+TYPE * MatriX<TYPE, CUDA>::memPrt() const{
+	if(trans()){
+		Assert("经过转置的矩阵不能使用memPrt函数");
+	}
+	if(scale != 1){
+		Assert("scale不为1的矩阵不能使用memPrt函数");
+	}
+	return dataPrt();
+};

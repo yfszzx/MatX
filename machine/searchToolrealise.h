@@ -117,8 +117,9 @@ void searchTool<TYPE, CUDA>::init_pos(MatXG &Ws,const MatXG &Grad, double loss, 
 	
 	moveCount = 0;	
 	if(!searchOver){
-		cout<<"\n[linear search interrupted]";
-		Step = initStep;
+		cout<<"\n[linear search interrupted]";	
+		Step = avgStep * 2;
+		
 	}
 	switch(algorithm){
 	case Fastest:
@@ -138,6 +139,11 @@ void searchTool<TYPE, CUDA>::init_pos(MatXG &Ws,const MatXG &Grad, double loss, 
 	overFlag = false;
 	maxPos = 0;
 	minPos = 0;
+	int tmp = min(avgCount, 200);
+	avgStep = (avgStep * tmp + Step)/(tmp + 1);
+	avgCount ++;
+	//Step = avgStep;
+	
 }
 template <typename TYPE, bool CUDA>
 bool searchTool<TYPE, CUDA>::line_search(MatXG &Ws,const MatXG &Grad, double loss){
@@ -148,8 +154,8 @@ bool searchTool<TYPE, CUDA>::line_search(MatXG &Ws,const MatXG &Grad, double los
 		Deriv_t = direct.dot(Grad);
 		Loss_t = loss;
 		int jdg= wolfe_powell_judge();
-		if(jdg == OK || moveCount> maxMoveNum){			
-			init_pos(Ws, Grad, loss, jdg == OK);
+		if(jdg == OK || moveCount> maxMoveNum){		
+			init_pos(Ws, Grad, loss, jdg == OK /*&& Step < maxStepScale * avgStep*/);
 			
 		}else{
 			if(jdg == LARGE){
@@ -178,6 +184,7 @@ bool searchTool<TYPE, CUDA>::line_search(MatXG &Ws,const MatXG &Grad, double los
 	if(debug){
 		cout<<"\nls"<<Loss<<"\tdv"<<Deriv<<"\tlst"<<Loss_t<<"\tdvt"<<Deriv_t;
 		cout<<"\nmc"<<moveCount<<"\tst"<<Step<<"\tmx"<<maxPos<<"\tmn"<<minPos<<"\tx"<<x;
+		cout<<"\navgStep"<<avgStep<<"\tavgCount"<<avgCount;
 		getchar();
 	}
 	return  overFlag;
@@ -195,6 +202,7 @@ searchTool<TYPE, CUDA>::searchTool(){
 	L_num = 5;
 	initStep = 0.1;
 	confirmRounds = 10;
+	//maxStepScale = 10;
 	reset();
 }
 template <typename TYPE, bool CUDA>
@@ -316,6 +324,8 @@ void searchTool<TYPE, CUDA>::L_init(int num){
 template <typename TYPE, bool CUDA>
 void searchTool<TYPE, CUDA>::reset(){
 	Step = initStep;
+	avgStep = Step;
+	avgCount = 1;
 	count = 0;	
 	recorderCount = 0;
 	Z = 1000;

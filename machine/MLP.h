@@ -24,10 +24,10 @@ protected:
 			nodes = val;
 			break;
 		case 1:
-			regIn = val;
+			regOut = val;
 			break;
 		case 2:
-			regOut = val;
+			regIn = val;
 			break;
 		}
 	}
@@ -44,11 +44,10 @@ protected:
 	virtual void annTrainHead(){
 		grads.clear();
 		grads<<grad_in<<grad_out<<grad_Bin<<grad_Bout;
-
 	}
 	virtual void forward(){
 		hide = tanh(dt.X[0] * Win + Bin);
-		dt.Y[0] = activeFunc(dt.actFunc, hide * Wout + Bout);			
+		dt.Y[0] = activeFunc(dt.actFunc, hide * Wout + Bout);					
 	}
 	virtual void backward(){
 		MatX diff = dt.Y[0] - dt.T[0];
@@ -64,6 +63,8 @@ protected:
 		grads /= batchSize;
 		grad_in += regIn * Win;
 		grad_out += regOut * Wout;
+		
+
 	}
 public:	
 	MLP(dataSetBase<TYPE, CUDA> & dtSet, string path):ANNBase(dtSet, path){

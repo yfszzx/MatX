@@ -27,7 +27,7 @@ public:
 	MatriX<TYPE, CUDA> * Xv;
 	MatriX<TYPE, CUDA> * Tv;
 	MatriX<TYPE, CUDA> * Yv;	
-	float validNumScale;
+	float validBatchNum;
 	int validFoldIdx;
 	int inputNum;
 	int outputNum;
@@ -40,7 +40,7 @@ public:
 	void loadBatch();
 	void makeBatch(int size = 0);		
 	virtual void makeValidList(int validIdx);
-	virtual void showResult(bool trainMod = true){};
+	virtual void showResult(){};
 	virtual void showValidsResult(MatGroup<TYPE, CUDA> &T, MatGroup<TYPE, CUDA> &Y){};
 	virtual void pauseAction(){};
 	void makeValid(int validIdx);

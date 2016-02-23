@@ -1,5 +1,7 @@
 #include <conio.h>   //¼àÌý¼üÅÌ
 #include <time.h>
+#include <direct.h>  
+#include <io.h>  
 #include "machineGlobal.h"
 #include "dataSetBase.h"
 #include "searchTool.h"
@@ -15,6 +17,7 @@
 #include "PLS.h"
 #include "LSTM.h"
 #include "STD.h"
+#include "fastMLP.h"
 
 #include "dataSetBaseRealise.h"
 #include "searchToolRealise.h"

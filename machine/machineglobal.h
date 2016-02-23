@@ -70,7 +70,9 @@ namespace ANNGlobal{
 			}
 		}
 	}
+	
 	const static int NullValid = -1;
+	const static int AllMachine = -2;
 }
 using namespace ANNGlobal;
 template <typename TYPE, bool CUDA>

@@ -3,6 +3,8 @@ string MachineBase< TYPE, CUDA>::binFileName(int idx){
 	stringstream nm;
 	if(idx == NullValid){
 		nm<<machPath<<"machine_NullValid.bin";
+	}else if(idx == AllMachine){
+		nm<<machPath<<"machine_*";
 	}else{
 		nm<<machPath<<"machine_"<<idx<<".bin";
 	}
@@ -108,6 +110,7 @@ template <typename TYPE, bool CUDA>
 MachineBase< TYPE, CUDA>::MachineBase(dataSetBase<TYPE, CUDA> & dtSet, string path):dt(dtSet){
 	foldsMach = NULL;
 	inputNum = dt.inputNum;
+	unsuperviseDim = inputNum;
 	outputNum = dt.outputNum;
 	machPath = path;
 	supervise = true;
@@ -144,7 +147,6 @@ void MachineBase< TYPE, CUDA>::predictInit(){
 		delete [] foldsMach;
 	}
 	if(supervise){
-
 		foldsMach = new MatGroup<TYPE ,CUDA>[dt.crossFolds];
 		for(int i = 0; i< dt.crossFolds; i++){
 			if(!fileIsExist(binFileName(i))){
@@ -161,6 +163,7 @@ void MachineBase< TYPE, CUDA>::predictInit(){
 		initMachine();
 		load(false, NullValid);
 	}
+	predictHead();
 };
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::predict(MatriX<TYPE, CUDA> * _Y, MatriX<TYPE, CUDA>* _X, int seriesLen = 1){
@@ -267,8 +270,40 @@ void MachineBase< TYPE, CUDA>::trainInitialize(){
 
 }
 template <typename TYPE, bool CUDA>
+int MachineBase< TYPE, CUDA>::getUnsupDim(){
+	return unsuperviseDim;
+}
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::clear(){
+		cout<<"\n是否要删除"<<machPath<<"下的所有算法文件?(y/n)";
+		string s;
+		cin>>s;
+		if(s[0]!='y'){
+			return;
+		}
+		struct _finddata_t fb;   //查找相同属性文件的存储结构体
+		string  path = binFileName(AllMachine);          
+		long    handle = _findfirst(path.c_str(),&fb);
+		if (handle != -1){
+			path = machPath + fb.name;
+			if(fileIsExist(path)){
+			remove(path.c_str());
+			}
+			while (0 == _findnext(handle,&fb)){
+						path = machPath + fb.name;
+						if(fileIsExist(path)){
+							remove(path.c_str());
+						}
+			}
+		}
+		path = machPath + "recorder.csv";
+		if(fileIsExist(path)){
+			remove(path.c_str());
+		}
+		
+}
+template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::trainRun(){
-
 	checkFold(machPath);
 	dt.loadDatas();
 	for(int i = 0; i< dt.crossFolds; i++){			

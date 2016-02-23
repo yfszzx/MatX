@@ -3,9 +3,15 @@ void dataSetBase<TYPE, CUDA>::makeTrainAndValidList(int * &valid, int * &train){
 	validNum = 0;
 	trainNum = 0;
 	vector<char> list;
+	int Vnum = 0;
 	for(int i = 0; i<dataNum; i++){
 		if(validBoolList[i] == 1){
-			if(rand()%1000 < validNumScale * 1000){
+			Vnum ++;
+		}
+	}
+	for(int i = 0; i<dataNum; i++){
+		if(validBoolList[i] == 1){
+			if(rand()%1000 < float(validBatchNum)/Vnum * 1000){
 				validNum ++;
 				list.push_back(true);
 			}else{
@@ -168,7 +174,7 @@ dataSetBase<TYPE, CUDA>::dataSetBase(){
 	crossFolds = 5;
 	actFunc = LINEAR;
 	seriesMod = false;
-	validNumScale = 1;
+	validBatchNum = 10000;
 	validSampleList = NULL;	
 }
 template <typename TYPE, bool CUDA>
@@ -202,13 +208,16 @@ void dataSetBase<TYPE, CUDA>::loadSamples(const TYPE * _X, const TYPE * _T, int 
 	initDataSpace();
 	X0[0].importData(_X);
 	T0[0].importData(_T);	
-	MatX tmpX;
-	MatX tmpY;
+	
 	for(int i = 0; i < pretreatment.size(); i++){
-		tmpX = X0[0].T();		
+		MatX tmpX;
+		MatX tmpY;
+		tmpX = X0[0].T();	
 		pretreatment[i]->predict(&tmpY, &tmpX);
 		X0[0] = tmpY.T();
+		inputNum = pretreatment[i]->getUnsupDim();
 	}	
+
 };
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::makeValidList(int vldIdx){		
@@ -286,8 +295,8 @@ void dataSetBase<TYPE, CUDA>::set(string name, float val){
 			return;
 	}
 
-	if(name == "validNumScale"){
-		validNumScale = val;
+	if(name == "validNum"){
+		validBatchNum = val;
 		return;
 	}
 	if(name == "activeFunc"){
@@ -315,5 +324,5 @@ template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::setPretreat(MachineBase<TYPE, CUDA> * pre){
 	pretreatment.push_back(pre);
 	pre->predictInit();
-
+	
 }

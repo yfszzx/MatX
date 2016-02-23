@@ -19,6 +19,7 @@ protected:
 	dataSetBase<TYPE, CUDA> & dt;
 	int inputNum;
 	int outputNum;	
+	int unsuperviseDim;
 	int trainCount;
 	float batchInitLoss;
 	int batchSize;
@@ -48,6 +49,7 @@ protected:
 	virtual void trainCore() = 0;
 	virtual bool trainAssist(){return 1;};
 	virtual void trainTail(){};
+	virtual void predictHead(){};
 	virtual void predictCore( MatX * _Y,  MatX * _X, int len = 1) = 0;
 	virtual TYPE unsupervisedExamine(MatX * _Y,  MatX * _X, int len = 1){ return 0;};//用于检验非监督学习的结果
 public:
@@ -60,5 +62,6 @@ public:
 	void operator ()(string s, float val);	
 	void showValidsResult();
 	void showConfigSetting();
-	
+	void clear();	
+	inline int getUnsupDim();
 };

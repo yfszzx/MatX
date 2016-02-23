@@ -16,8 +16,8 @@ private:
 	float trainLoss;
 	float validLoss;
 	float minValidLoss;
-	
 
+	bool breakFlag(int cnt);
 	void step();
 	void annealControll();
 	void threadsTasks();
@@ -40,7 +40,6 @@ protected:
 	virtual bool trainAssist();
 	void initConfigValue();
 	void setConfigValue(int idx, float val);
-	void annInitConfig(){};
 	virtual void annInitConfigValue() = 0;
 	virtual void annSetConfigValue(int idx, float val) = 0;
 	virtual void initMachine() = 0;
@@ -49,7 +48,5 @@ protected:
 	virtual void forward() = 0;
 	virtual void backward() = 0;
 public:
-	ANNBase(dataSetBase<TYPE, CUDA> & dtSet, string path);
-	
-	
+	ANNBase(dataSetBase<TYPE, CUDA> & dtSet, string path);	
 };

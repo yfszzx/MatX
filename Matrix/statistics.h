@@ -63,7 +63,7 @@ MatriX<TYPE,CUDA> MatriX< TYPE,CUDA>::rowsSum() const{
 };
 template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> MatriX<TYPE,CUDA>::mean() const{
-	return sum()/size();
+	return sum()/rows();
 };
 template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> MatriX<TYPE,CUDA>::MSE() const{

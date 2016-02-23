@@ -2,19 +2,18 @@ template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::step(){	
 	do{		
 		forward();			
-		backward();			
+		backward();	
 	}while(!Search.move(Mach, grads, loss, dt.randBatch));	
 }
 template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::annealControll(){
 	if(!Search.notable()){
-		batchSizeControlar *= batchInceaseRate;
-		if(batchSizeControlar > maxBatchSize){
-			batchSizeControlar = maxBatchSize;
-			batchTrainRounds *= roundsDeceaseRate;
-			if(batchTrainRounds<1){
-				batchTrainRounds = 1;
-			
+		batchTrainRounds *= roundsDeceaseRate;
+		if(batchTrainRounds < 1){
+			batchTrainRounds = 1;
+			batchSizeControlar *= batchInceaseRate;
+			if(batchSizeControlar > maxBatchSize){
+				batchSizeControlar = maxBatchSize;			
 			}
 		}
 	}
@@ -23,7 +22,7 @@ template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::showAndRecord(){
 	float tm = rcdTimer.get(false);
 	cout<<"\n"<<trainCount<<"("<<Search.rounds()<<")   data loss:"<<trainLoss<<"   valid loss:"<<validLoss<<"   min_loss:"<<minValidLoss;
-	cout<<"\nbatch size:"<<batchSize;
+	cout<<"\nbatch size:"<<batchSize<<"\navgStep:"<<Search.avgStep;
 	if(dt.randBatch){
 		cout<<"\ttrain rounds:"<<batchTrainRounds;
 	}
@@ -36,11 +35,13 @@ void ANNBase<TYPE, CUDA>::showAndRecord(){
 	if(vldLoss > 1){
 		vldLoss = 1;
 	}
+	
 	rcdFile<<trainCount<<","<<trnLoss<<","<<vldLoss<<","<<minValidLoss<<","<<batchTrainRounds<<","<<batchSize<<","<<Search.getZ()<<","<<tm<<endl;
 	//dt.showResult();
 }
 template <typename TYPE, bool CUDA>
 bool ANNBase<TYPE, CUDA>::stepRecord(){
+
 	if( trainCount % showFrequence == 0){
 		validLoss = getValidLoss()/dt.validInitLoss;
 		if(minValidLoss == 0 || minValidLoss > validLoss){

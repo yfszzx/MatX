@@ -16,12 +16,15 @@ private:
 	TYPE Step;
 	TYPE maxPos;
 	TYPE minPos;
+
+	int avgCount;
 	int moveCount;	
 	bool startFlag;
 	bool overFlag;
 	bool lineOver;
 	int algorithm;
 	int count;
+	//float maxStepScale;
 	inline double interpolation(double x,double v0,double v1,double derv0,double derv1);
 	inline int wolfe_powell_judge();
 	bool momentum_grad(MatXG &Ws,const MatXG &Grad, double loss);
@@ -61,6 +64,7 @@ public:
 	int maxMoveNum;
 	float Zscale;
 	bool debug;
+	double avgStep;
 
 	//·µ»ØÖµ
 	
