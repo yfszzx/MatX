@@ -28,11 +28,33 @@ bool MachineBase< TYPE, CUDA>::overedFile(int foldIdx){
 	return over;
 }
 template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::saveConfig(ofstream & fl){
+	int num = configRecorder.size();
+	fl.write((char *)&num, sizeof(int));
+	for(int i = 0; i < num; i++){
+		fl.write((char *)&configRecorder[i], sizeof(float));
+		fl.write((char *)configName[i].c_str(), sizeof(char) * 256);
+	}
+};
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::loadConfig(ifstream & fl){
+	int num;
+	fl.read((char *)&num, sizeof(int));
+	float val;
+	char str[256];
+	for(int i = 0; i < num; i++){
+		fl.read((char *)&val, sizeof(float));
+		fl.read((char *)str, sizeof(char) * 256);
+		(*this)(str, val);
+	}	
+};
+template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::save(bool finished){
 	string file = binFileName(dt.validFoldIdx);
 	cout<<"\n正在保存"<<file;
 	ofstream fl(file, ios::binary);
 	fl.write((char *)&finished, sizeof(bool));
+	saveConfig(fl);
 	saveParameters(fl);
 	bestMach.save(fl);
 	Mach.save(fl);	
@@ -48,25 +70,32 @@ void MachineBase< TYPE, CUDA>::load(bool trainMod, int idx){
 	ifstream fl(file, ios::binary);
 	bool finished;
 	fl.read((char *)&finished, sizeof(bool));
+	loadConfig(fl);
+	Mach.clear();
+	initMachine();
 	loadParameters(fl);
 	if(trainMod){
 		bestMach.read(fl);
+		Mach.read(fl);	
+
+	}else{
+		Mach.read(fl);
+	//Mach.read(fl);
 	}
-	Mach.read(fl);	
 	fl.close();
 }
 
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::showValidsResult(){	
 	if(supervise){
+		dt.loadDatas();
 		vector<MatX> rcdT;
 		vector<MatX> rcdY;
 		for(int i = 0; i< dt.crossFolds; i++){
 			if(!fileIsExist(binFileName(i))){
 				continue;
 			}
-			dt.makeValid(i);	
-			initMachine();
+			dt.makeValid(i);		
 			load(false, i);	
 			if(supervise){
 				cout<<"\nLoss:"<<getValidLoss()/dt.validInitLoss;
@@ -78,10 +107,11 @@ void MachineBase< TYPE, CUDA>::showValidsResult(){
 			for(int j = dt.preLen; j<dt.seriesLen; j++){
 				rcdT.push_back(dt.Tv[j]);
 				rcdY.push_back(dt.Yv[j]);
-				num += dt.Tv[j].size();		
+				num += dt.Tv[j].size();	
 			}			
 			cout<<"\nsamples num:"<<num;
 		}
+		
 		if(supervise){
 			MatXG validT(rcdT.data(), rcdT.size());
 			MatXG validY(rcdY.data(), rcdY.size());
@@ -99,7 +129,7 @@ TYPE MachineBase< TYPE, CUDA>::getValidLoss(){
 	if(supervise){
 		double ls = 0;
 		for(int i = dt.preLen ; i < dt.seriesLen; i++){
-			ls += (dt.Yv[i] - dt.Tv[i]).squaredNorm();
+			ls += (dt.Yv[i] - dt.Tv[i]).norm2();
 		}
 		return ls/dt.validNum/(dt.seriesLen - dt.preLen)/2;
 	}else{
@@ -152,7 +182,6 @@ void MachineBase< TYPE, CUDA>::predictInit(){
 			if(!fileIsExist(binFileName(i))){
 				continue;
 			}
-			initMachine();
 			load(false, i);
 			foldsMach[i] = Mach;
 		}
@@ -160,7 +189,6 @@ void MachineBase< TYPE, CUDA>::predictInit(){
 		if(!fileIsExist(binFileName(NullValid))){
 			Assert("非监督算法还未训练完毕");
 		}
-		initMachine();
 		load(false, NullValid);
 	}
 	predictHead();
@@ -208,6 +236,13 @@ void MachineBase< TYPE, CUDA>::operator ()(string s, float val){
 	configRecorder[idx] = val;
 	setConfigValue(idx, val);
 };
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::kbGet(string s){
+	float val;
+	cout<<"\n输入"<<s<<":";
+	cin>>val;
+	(*this)(s, val);
+};
 
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::showConfigSetting(){
@@ -219,6 +254,7 @@ void MachineBase< TYPE, CUDA>::showConfigSetting(){
 };
 template <typename TYPE, bool CUDA>
 void * MachineBase<TYPE, CUDA>::threadTrain( void * _this){
+	srand(time(NULL) + ((MachineBase<TYPE, CUDA> *)_this)->randSeeder);
 	MachineBase<TYPE, CUDA> & t = * (MachineBase<TYPE, CUDA> *)_this;
 	t.trainCore();
 	t.batchFinished = t.trainAssist();	
@@ -236,7 +272,7 @@ void MachineBase<TYPE, CUDA>::kbPause(){
 	if(_kbhit()){
 		char s = getchar();
 		if(s == 'p'||s=='P'){
-			dt.pauseAction();
+			dt.pauseAction(this);
 		}
 	}
 }
@@ -253,8 +289,9 @@ void MachineBase< TYPE, CUDA>::trainInitialize(){
 	initMachine();
 	bestMach = Mach;
 	string rcdFl = machPath + "recorder.csv";
-	if(fileIsExist(binFileName())){
+	if(fileIsExist(binFileName(dt.validFoldIdx))){
 		load(true, dt.validFoldIdx);
+		showConfigSetting();
 		rcdFile.open(rcdFl, ios::app);
 		rcdFile<<"[continue]"<<endl;	
 	}else{

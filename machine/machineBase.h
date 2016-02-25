@@ -4,6 +4,8 @@ private:
 	bool overedFile(int foldIdx = -1);
 	void trainInitialize();
 	void trainMain(int idx);
+	void saveConfig(ofstream & fl);
+	void loadConfig(ifstream & fl);
 	MatXG * foldsMach;
 	string machPath;	
 	static void * threadTrain( void * _this);
@@ -15,6 +17,8 @@ private:
 	void load(bool trainMod, int foldIdx);
 	string binFileName(int idx = -1);
 	bool supervise;
+
+
 protected:	
 	dataSetBase<TYPE, CUDA> & dt;
 	int inputNum;
@@ -34,7 +38,6 @@ protected:
 	void initSet(int configIdx, string name, float val);
 	void kbPause();
 	TYPE getValidLoss();
-	void save(bool finished = false);
 	void unsupervise();
 	
 		
@@ -56,12 +59,15 @@ public:
 	
 	MachineBase(dataSetBase<TYPE, CUDA> & dtSet, string path);
 	~MachineBase();
+	void save(bool finished = false);
 	void trainRun();	
 	void predictInit();
 	void predict(MatX * _Y, MatX * _X, int seriesLen = 1);
 	void operator ()(string s, float val);	
+	void kbGet(string name);
 	void showValidsResult();
 	void showConfigSetting();
 	void clear();	
 	inline int getUnsupDim();
+	
 };

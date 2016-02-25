@@ -121,24 +121,19 @@ template <typename TYPE, bool CUDA>
 bool ANNBase<TYPE, CUDA>::breakFlag(int cnt){
 
 	 if(cnt < int(batchTrainRounds)){
-		return true;
-	}
-	 if(cnt > int(batchTrainRounds) + 1){
-		 return false;
-	 }
-	 if(cnt == batchTrainRounds){
 		return false;
+	}
+	 if(cnt >= batchTrainRounds){
+		 return true;
 	 }
-	 if(rand() % 100 > (batchTrainRounds - int(batchTrainRounds)) * 100){
-		 return false;
-	 }
-	 return true;
+	 return (rand() % 1000 ) > (batchTrainRounds - int(batchTrainRounds)) * 1000;
+	 
 }
 template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::trainCore(){		
 	int cnt = 0;
 	do{	
-		step();				
+		step();		
 		cnt ++;
 		if(!dt.randBatch){
 			stepRecord();	
@@ -151,7 +146,8 @@ void ANNBase<TYPE, CUDA>::trainCore(){
 			annealControll();	
 		}		
 		
-	}while(!dt.randBatch || breakFlag(cnt));
+		
+	}while(!dt.randBatch || !breakFlag(cnt));
 	
 }
 template <typename TYPE, bool CUDA>

@@ -38,8 +38,8 @@ public:
 		loadSamples(data, label_d, train_num);
 	}
 	void showResult(){	
-		float * Yd = Y[0].T().getData();
-		float * Td = T[0].T().getData();
+		float * Yd = Yv[0].T().getData();
+		float * Td = Tv[0].T().getData();
 		accuracy(Yd, Td, validNum);
 		delete [] Yd;
 		delete [] Td;
@@ -60,6 +60,9 @@ public:
 		}
 		cout<<"\naccuracy"<<(ret/num);
 	};
+	virtual void pauseAction(MachineBase<float, CUDA> * _this){
+		_this->save(true);
+	}
 };
 template <typename TYPE, bool CUDA>
 class singleSeries: public seriesDataBase<TYPE, CUDA>{

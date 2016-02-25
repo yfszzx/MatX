@@ -178,7 +178,6 @@ float multi_perceptrons::get_result(float *input,float *target){
 	nerv_bottom->run(input);
 	for(ci=1;ci<layers_num;ci++){
 		nervs[ci]->run(nervs[ci-1]->output);
-		//coutd<<"oi"<<array_length(nervs[ci-1]->output,nervs[ci-1]->nodes_num*data_num);
 	}
 	gpu_loss_function<<<blocks,g_threads>>>(nerv_top->output,target,tmp_array,output_tmp,o_len,loss_mod,output_dimen);	
 	CUDA_CHECK;
@@ -263,18 +262,13 @@ void multi_perceptrons::top_pre_deriv(){
 	}
 	if(nerv_top->type=='l')
 		CUBT(cublasScopy(cublasHandle,o_len, output_tmp, 1,nerv_top->output,1));
-	//coutd<<"ot"<<array_length(nerv_top->output,o_len);
-	//coutd<<"to"<<array_length(output_tmp,o_len);
+
 }
 void multi_perceptrons::cacul_deriv(float *input,float *target){
 	top_pre_deriv();
 	for(ci=layers_num-1;ci>0;ci--){
-		//coutd<<"do1 "<<array_length(nervs[ci]->output,nervs[ci]->nodes_num*data_num);
 		nervs[ci]->get_deriv(nervs[ci-1]->output);	
-		//coutd<<"do2 "<<array_length(nervs[ci]->output,nervs[ci]->nodes_num*data_num);
 		nervs[ci]->get_sub_deriv(nervs[ci-1]->output,nervs[ci-1]->type);
-		//coutd<<"do3 "<<array_length(nervs[ci]->output,nervs[ci]->nodes_num*data_num);
-
 	}
 	nervs[0]->get_deriv(input);
 	if(reguler_mod){

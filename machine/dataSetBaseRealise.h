@@ -54,9 +54,11 @@ void dataSetBase<TYPE, CUDA>::makeValid(){
 	for(int i = 0; i< seriesLen; i ++){
 		Xv[i] = X0[i].colsMapping(validList, validNum).T();
 		Tv[i] = T0[i].colsMapping(validList, validNum).T();
-		validInitLoss += Tv[i].allMSE()/2;
+		if(i >= preLen){
+			validInitLoss += Tv[i].allMSE()/2 * outputNum;
+		}
 	}		
-	validInitLoss /= seriesLen;
+	validInitLoss /= (seriesLen - preLen);
 	delete [] validList;
 
 }
@@ -96,7 +98,7 @@ void dataSetBase<TYPE, CUDA>::makeBatch(int size){
 		for(int i = 0; i< seriesLen; i++){
 			Xhost[i] = X0[i].colsMapping(batchList, batchSize).T();
 			Thost[i] = T0[i].colsMapping(batchList, batchSize).T();
-			batchInitLoss +=  Thost[i].allMSE()/2;
+			batchInitLoss +=  Thost[i].allMSE()/2 * outputNum;
 
 		}		
 		delete [] batchList;

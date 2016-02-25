@@ -5,11 +5,15 @@ double searchTool<TYPE, CUDA>::interpolation(double x,double v0,double v1,double
 	s=3*(v1-v0)/x;
 	z=s-derv1-derv0;
 	w=z*z-derv1*derv0;
+	//Dbg4(v0,derv0,v1,derv1);
+	//Dbg2(w,s,z);
 	if(w<0)return -1;
 	w=sqrt(w);
 	s=derv1-derv0+2*w;
-	if(s==0)return -1;
+	//Dbg2(w,s);
+	if(s==0)return -1;	
 	x=x*(w-derv0-z)/s;
+	//Dbg(x);
 	if(_finite(x))return x;
 	return -1;
 }
@@ -200,7 +204,7 @@ searchTool<TYPE, CUDA>::searchTool(){
 	debug = false;
 	L_alf = NULL;
 	L_num = 5;
-	initStep = 0.1;
+	initStep = 0.051;
 	confirmRounds = 10;
 	//maxStepScale = 10;
 	reset();
@@ -219,23 +223,26 @@ void searchTool<TYPE, CUDA>::recordLoss(float loss){
 	lossRecorder.assignment(recorderCount, loss);
 	recorderCount ++;
 	if(recorderCount == confirmRounds){
-		float tmpMean;
-		float tmpMSE = lossRecorder.allMSE(tmpMean);
-		if(lossMean == 0){
-			Z =tmpMean/sqrt(tmpMSE/confirmRounds);
+		float currentMean;
+		float currentMSE = lossRecorder.allMSE(currentMean);
+		if(lossMean == -1){
+			lossMean = currentMean;
+			lossMSE = currentMSE;
+			//Z =currentMean/sqrt(currentMSE/confirmRounds);
 		}else{
-			if(tmpMSE + lossMSE < FLT_MIN){
+			if(currentMSE + lossMSE < FLT_MIN){
 				Z = -1000;
 			}else{
-				Z =(lossMean - tmpMean)/sqrt((tmpMSE + lossMSE)/confirmRounds);
+				Z =(lossMean - currentMean)/sqrt((currentMSE + lossMSE)/confirmRounds);
 			}
 			if(Z < Zscale ){
 				notableFlag = false;
 			}
+			cout<<"\nmean:"<<lossMean<<" "<<currentMean<<"\tMSE:"<<lossMSE<<" "<<currentMSE<<"\tZ:"<<Z;
+			lossMean = -1;
+			lossMSE = -1;
 		}
-		cout<<"\nmean:"<<lossMean<<" "<<tmpMean<<"\tMSE:"<<lossMSE<<" "<<tmpMSE<<"\tZ:"<<Z;
-		lossMean = tmpMean;
-		lossMSE = tmpMSE;
+		
 		recorderCount = 0;
 
 	}
@@ -331,8 +338,8 @@ void searchTool<TYPE, CUDA>::reset(){
 	Z = 1000;
 	setConfirmRounds(confirmRounds);
 	setAlg(algorithm, L_num);
-	lossMean = 0;
-	lossMSE = 0;	
+	lossMean = -1;
+	lossMSE = -1;	
 	changeBatch();
 	notableFlag = true;
 	

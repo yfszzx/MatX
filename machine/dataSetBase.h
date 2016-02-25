@@ -42,7 +42,7 @@ public:
 	virtual void makeValidList(int validIdx);
 	virtual void showResult(){};
 	virtual void showValidsResult(MatGroup<TYPE, CUDA> &T, MatGroup<TYPE, CUDA> &Y){};
-	virtual void pauseAction(){};
+	virtual void pauseAction(MachineBase<TYPE, CUDA> * _this){};
 	void makeValid(int validIdx);
 	void show();
 	void init(int iptNum, int optNum);

@@ -35,7 +35,7 @@ protected:
 		string path = "ss";
 		mlp=new multi_perceptrons(path);
 		mlp->train_mod=true;
-		mlp->struct_simple_set(dt.inputNum, dt.outputNum, nodes, 't', 'l');
+		mlp->struct_simple_set(dt.inputNum, dt.outputNum, nodes, 't', 's');
 	};
 	virtual int getBatchSize(){
 		return dt.trainNum  * batchScale;
@@ -52,8 +52,9 @@ protected:
 	virtual void trainCore(){
 		mlp->set_data_num(batchSize);		
 		search(1);
-		dt.Y[0] = MatX::Zero(dt.outputNum, batchSize).T();
+		dt.Y[0] = MatX::Zero(dt.outputNum, batchSize);
 		dt.Y[0].importData(mlp->nerv_top->output);
+		dt.Y[0] = dt.Y[0].T();
 	}
 	virtual bool trainAssist(){
 		//cout<<"\ndataLoss"<<(dt.Y[0] -dt.T[0]).squaredNorm()/batchSize/2/batchInitLoss;		
@@ -114,15 +115,16 @@ protected:
 	virtual void initMachine(){		
 		mlp = new multi_perceptrons("flod");
 		mlp->train_mod = true;
-		mlp->struct_simple_set(dt.inputNum, dt.outputNum, nodes, 't', 'l');
-		W = MatX::Zero(mlp->weight_len);
-		W.importData(mlp->weight, true);
+		mlp->struct_simple_set(dt.inputNum, dt.outputNum, nodes, 't', 's');
+		W = MatX::Random(mlp->weight_len,1)/1000;
+		W.exportData(mlp->weight, true);
 		Mach<<W;
 	}
 	virtual void predictCore( MatX * _Y, MatX * _X, int len = 1) {
-		_Y[0] = MatX::Zero(_X[0].rows(), dt.outputNum );
+		_Y[0] = MatX::Zero(dt.outputNum, _X[0].rows());
 		TYPE * tX = _X[0].T().getData(true);
-		_Y[0].importData(mlp->layer_out(1, tX, _X[0].rows()), true);
+		_Y[0].importData(mlp->layer_out(mlp->layers_num - 1, tX, _X[0].rows()), true);
+		_Y[0] = _Y[0].T();
 		cuWrap::free(tX);	
 	}
 	virtual void annTrainHead(){
@@ -131,25 +133,39 @@ protected:
 		grads<<gd;
 	}
 	virtual void forward(){
-		gd.exportData(mlp->deriv, true);
+		//gd.exportData(mlp->deriv, true);
 		W.exportData(mlp->weight, true);
 		mlp->set_data_num(batchSize);		
 		TYPE * tX = dt.X[0].T().getData(true);
 		TYPE * tT = dt.T[0].T().getData(true);
-		//cout<<dt.X[0].str();
-		//Dbg(dt.X[0].MSE());
-		//getchar();
+		MatX tt = MatX::Zero(dt.inputNum, 5);
+		Dbg(dt.X[0].topRows(5).T());
+		tt.importData(tX, true);
+		float * j = new float[784];
+		cuWrap::memD2H(j, tX, sizeof(float) *784);
+		for(int i = 0; i < 784; i++){
+			cout<<j[i]<<"\t";
+		}
+		getchar();
+		Dbg(tt);
+		Dbg(dt.T[0].topRows(5).T());
+		MatX ttt = MatX::Zero(dt.outputNum, 5);
+		ttt.importData(tT, true);
+		Dbg(ttt);
 		mlp->cacul_nerv(tX, tT);		
 		cuWrap::free(tX);
 		cuWrap::free(tT);
 	}
 	virtual void backward(){
-		dt.Y[0] = MatX::Zero(dt.outputNum, batchSize).T();
-		dt.Y[0].importData(mlp->nerv_top->output);
+		dt.Y[0] = MatX::Zero(dt.outputNum, batchSize);
+		dt.Y[0].importData(mlp->nerv_top->output, true);
+		dt.Y[0] = dt.Y[0].T();
 		gd.importData(mlp->deriv, true);
 		W.importData(mlp->weight, true);
 		loss = mlp->result;
-		dataLoss = mlp->real_result/2;
+		//gd /=2;
+		//cuWrap::scale(mlp->deriv, 0.5f, mlp->weight_len);
+		//dataLoss = mlp->real_result/2;
 	}
 public:	
 	fMLP(dataSetBase<TYPE, CUDA> & dtSet, string path):ANNBase(dtSet, path){
