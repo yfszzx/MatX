@@ -49,5 +49,6 @@ public:
 	int cols() const;
 	int rows() const;
 	int size() const;	
+	void resize(int row, int col);
 };
 

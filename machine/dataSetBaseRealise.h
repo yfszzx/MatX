@@ -46,6 +46,23 @@ void dataSetBase<TYPE, CUDA>::makeTrainAndValidList(int * &valid, int * &train){
 
 }
 template <typename TYPE, bool CUDA>
+void dataSetBase<TYPE, CUDA>::featureFilter(bool * featureList){
+	int newDim = 0;
+	for(int i = 0; i <  XDim; i++){
+		if(featureList[i]){
+			newDim ++;
+		}
+	}	
+	for(int s = 0; s < seriesLen; s++){
+		for(int i = 0; i < X0[s].cols(); i++){
+			for(int f = 0; f < X0[s].rows(); f++){
+				X0[s].assignment(i * newDim + f, X0[s][i * XDim + f]);				
+			}
+		}
+	}
+	XDim = newDim;
+};
+template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::makeValid(){
 	makeValidList(validFoldIdx);
 	int *validList;

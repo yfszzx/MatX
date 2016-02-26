@@ -33,6 +33,7 @@ void ANNBase<TYPE, CUDA>::trainHead(){
 		batchTrainRounds = initBatchTrainRounds;
 		batchSizeControlar = initBatchSize;
 		Search.reset();	
+		grads.clear();
 		annTrainHead();
 };
 template <typename TYPE, bool CUDA>

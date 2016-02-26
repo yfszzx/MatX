@@ -51,6 +51,10 @@ namespace cuWrap{
 	 void sigm(float *A, int len);
 	 void tanh(double *A, int len);
 	 void tanh(float *A, int len);
+	 void sigmDeriv(double *diff, double * val, int len);
+	 void sigmDeriv(float *diff, float * val,int len);
+	 void tanhDeriv(double *diff, double * val, int len);
+	 void tanhDeriv(float *diff, float * val, int len);
 	 void square(double *A, int len);
 	 void square(float *A, int len);
 	 double sum(double *A, int len);

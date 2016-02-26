@@ -42,7 +42,6 @@ protected:
 		_Y[0] = activeFunc(dt.actFunc, tanh(_X[0] * Win + Bin) * Wout + Bout);	
 	}
 	virtual void annTrainHead(){
-		grads.clear();
 		grads<<grad_in<<grad_out<<grad_Bin<<grad_Bout;
 	}
 	virtual void forward(){
@@ -63,7 +62,29 @@ protected:
 		grads /= batchSize;
 		grad_in += regIn * Win;
 		grad_out += regOut * Wout;
-		
+		/* ÌÝ¶È¼ìÑé
+		double sm1 = 0;
+		double sm2 = 0;
+		double sm3 = 0;
+		float scl = 0.00002;
+		for(int i = 0; i < grads.num(); i++){
+			for(int j = 0; j < grads[i].size(); j++){
+
+				float tmp = Mach[i][j];
+				tmp += scl;
+				Mach[i].assignment(j,tmp);
+				float d = grads[i][j];
+				dt.Y[0] = activeFunc(dt.actFunc, tanh(dt.X[0] * Win + Bin) * Wout + Bout);	
+				float result = (dt.Y[0] - dt.T[0]).squaredNorm()/batchSize/2;
+				sm1 += (result - loss)/scl * (result - loss)/scl;
+				sm2 += d * d;
+				sm3 += (sm1 - sm2) *  (sm1 - sm2);
+				tmp -= scl;
+				Mach[i].assignment(j,tmp);
+			}
+
+		}
+		Dbg3(sm1, sm2, sm3);	*/
 
 	}
 public:	

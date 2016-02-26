@@ -23,15 +23,14 @@ TYPE MatriX< TYPE,CUDA>::allMSE(TYPE & avg)  const{
 template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> MatriX< TYPE,CUDA>::colsSum() const{
 	MatriX< TYPE,CUDA> ret(rows(), 1);
-	ret.scale = scale;
 	if(CUDA){
 		cuWrap::colSum(ret.dataPrt(), dataPrt(), scale, trans(), rows(), cols());		
 	}else{		
 		eigenMat ones = eigenMat::Ones(cols(), 1);
 		if(trans()){
-			ret.eMat() = eMat().transpose() * ones;
+			ret.eMat() = eMat().transpose() * ones * scale;
 		}else{		
-			ret.eMat() = eMat() * ones;
+			ret.eMat() = eMat() * ones * scale;
 		}
 	}
 	return ret;
@@ -48,15 +47,15 @@ MatriX<TYPE,CUDA> MatriX< TYPE,CUDA>::sum() const{
 template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> MatriX< TYPE,CUDA>::rowsSum() const{
 	MatriX< TYPE,CUDA> ret(1, cols());
-	ret.scale = scale;
+
 	if(CUDA){
 		cuWrap::rowSum(ret.dataPrt(), dataPrt(), scale, trans(), rows(), cols());		
 	}else{		
 		eigenMat ones = eigenMat::Ones(1, rows());
 		if(trans()){
-			ret.eMat() = ones * eMat().transpose();
+			ret.eMat() = ones * eMat().transpose() * scale;
 		}else{		
-			ret.eMat() = ones * eMat() ;
+			ret.eMat() = ones * eMat() * scale;
 		}
 	}
 	return ret;

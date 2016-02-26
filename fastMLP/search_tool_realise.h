@@ -281,14 +281,13 @@ float search_tool::interpolation(float x,float v0,float v1,float derv0,float der
 }
 float search_tool::wolfe_powell(float step){			
 	float v0,v1,d0,d1;
-	float max_s=0,min_s=0;			
+	float max_s=0, min_s=0;			
 	float len=length(direct);		
-	v0=*result;
+	v0 = *result;
+	d0 = -dot(direct, deriv)/len;
 
-	d0=-dot(direct,deriv)/len;
-	//coutd<<len<<" "<<d0;getchar();
 	//搜索方向与梯度方向夹角不能太小，否则重置
-	if(d0>-set.max_search_angle*deriv_len)return 0;
+	//if(d0>-set.max_search_angle*deriv_len)return 0;
 
 	float min_value=v0,min_step=0;
 	clone(pos,pos_init);	//记录初始点,搜索失败或者结果不是搜索过程中最小值时使用
@@ -309,7 +308,7 @@ float search_tool::wolfe_powell(float step){
 		}	
 
 		flag=0;
-		if(v1<v0&&abs(d1)<abs(d0)*set.accept_scale)break;//导数小于特定值则接受该点
+		//if(v1<v0&&abs(d1)<abs(d0)*set.accept_scale)break;//导数小于特定值则接受该点
 		if(v1>v0+set.wp_value*step*d0){
 			if(d1<0)flag=-1;
 			else flag=1;
@@ -328,11 +327,15 @@ float search_tool::wolfe_powell(float step){
 		if(flag==-1)min_s=step;	
 
 		float tmp=interpolation(step,v0,v1,d0,d1);//两点三次插值，如果不能找到插值点，返回-1
-		if(tmp>min_s&&(tmp<max_s||max_s==0))step=tmp;			
+		if(tmp>min_s&&(tmp<max_s||max_s==0)){
+			step=tmp;			
+		}
 		else{//如果三次插值失败，使用两点两次插值
 			tmp=-d0*step/(d1-d0);
-			if(_finite(tmp)&&tmp>min_s&&(tmp<max_s||max_s==0))step=tmp;
-			else{//如果两点两次插值失败，使用中点插值
+			/*if(_finite(tmp)&&tmp>min_s&&(tmp<max_s||max_s==0)){
+				step=tmp;
+			}else*/
+			{//如果两点两次插值失败，使用中点插值
 				if(flag==1)step=(max_s+min_s)/2;
 				if(flag==-1){
 					if(max_s!=0)step=(max_s+min_s)/2;

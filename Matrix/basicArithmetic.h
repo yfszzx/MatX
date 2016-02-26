@@ -5,7 +5,11 @@ MatriX< TYPE, CUDA> & MatriX< TYPE,CUDA>::operator *= (const TYPE val){
 }
 template <typename TYPE, bool CUDA>
 MatriX< TYPE, CUDA> & MatriX< TYPE,CUDA>::operator /= (const TYPE val){
-	scale /= val;
+	if(CUDA){
+		cuWrap::scale(dataPrt(), TYPE(1)/val, size());
+	}else{
+		eMat() /= val;
+	}
 	return *this;
 }
 template <typename TYPE, bool CUDA>

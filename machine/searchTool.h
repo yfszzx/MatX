@@ -52,6 +52,7 @@ private:
 	void recordLoss(float loss);
 	float Z;
 	bool notableFlag;
+	float maxStep;
 public:
 	
 	//ËÑË÷²ÎÊý

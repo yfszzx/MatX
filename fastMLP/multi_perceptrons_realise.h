@@ -34,8 +34,8 @@ __global__ void gpu_loss_function(float *out,float *target,float *o,float *deriv
 		float dev=ot-target[idx];
 		switch(loss_mod){
 		case '2':
-			o[idx]=dev*dev;
-			deriv[idx]=2*dev;
+			o[idx]=dev*dev/2;
+			deriv[idx]=dev;
 			break;
 		case '1':
 			o[idx]=abs(dev);
@@ -85,7 +85,7 @@ __global__ void gpu_loss_value(float *out,float *target,float *o,int dimen,char 
 		float dev=ot-target[idx];
 		switch(loss_mod){
 		case '2':
-			o[idx]=dev*dev;
+			o[idx]=dev*dev/2;
 			break;
 		case '1':
 			o[idx]=abs(dev);

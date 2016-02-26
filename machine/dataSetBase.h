@@ -44,6 +44,7 @@ public:
 	virtual void showValidsResult(MatGroup<TYPE, CUDA> &T, MatGroup<TYPE, CUDA> &Y){};
 	virtual void pauseAction(MachineBase<TYPE, CUDA> * _this){};
 	void makeValid(int validIdx);
+	void featureFilter(bool * featureList);
 	void show();
 	void init(int iptNum, int optNum);
 	void loadDatas();

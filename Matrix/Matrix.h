@@ -39,6 +39,7 @@ class MatriX : public matCore<TYPE, CUDA> {
 	friend ostream& operator << <TYPE, CUDA>(ostream &os, const MatriX<TYPE, CUDA> &m);
 	friend MatriX<TYPE, CUDA> operator - <TYPE, CUDA>(const MatriX<TYPE, CUDA> &m);
 	friend MatGroup<TYPE, CUDA>;
+	friend fastMat<TYPE, CUDA>;
 private:
 	enum operateType { STRU = 1, CON = 2, TRAN = 3, SCL = 4, ALL = 5 ,TURN = 6};
 	//STRU 开辟空间，拷贝结构;  CON 完全拷贝; TRAN 拷贝，若tranFlag == true 则实现转置; SCL 拷贝并实现scale; ALL 联合执行 TRAN 和SCL;TURN 将矩阵内存转置,外观不变
@@ -74,7 +75,7 @@ public:
 	static  MatriX<TYPE, CUDA> Diagonal(const  MatriX<TYPE, CUDA> & mat);
 	inline MatriX<TYPE, CUDA> & assignment(int row, int col, TYPE val);
 	inline MatriX<TYPE, CUDA> & assignment(int idx, TYPE val);
-	
+	MatriX & resize(int rows, int cols);
 
 
 

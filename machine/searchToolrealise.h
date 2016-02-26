@@ -1,20 +1,22 @@
 template <typename TYPE, bool CUDA>
-double searchTool<TYPE, CUDA>::interpolation(double x,double v0,double v1,double derv0,double derv1){//两点三次插值
+double searchTool<TYPE, CUDA>::interpolation(double x, double v0, double v1, double derv0, double derv1){//两点三次插值
 	double s,z;
 	double w;
-	s=3*(v1-v0)/x;
-	z=s-derv1-derv0;
-	w=z*z-derv1*derv0;
-	//Dbg4(v0,derv0,v1,derv1);
-	//Dbg2(w,s,z);
-	if(w<0)return -1;
-	w=sqrt(w);
-	s=derv1-derv0+2*w;
-	//Dbg2(w,s);
-	if(s==0)return -1;	
-	x=x*(w-derv0-z)/s;
-	//Dbg(x);
-	if(_finite(x))return x;
+	s = 3 * (v1 - v0) / x;
+	z = s - derv1 - derv0;
+	w = z * z - derv1 * derv0;
+	if(w < 0){
+		return -1;
+	}
+	w = sqrt(w);
+	s = derv1 - derv0 + 2 * w;
+	if(abs(s) < FLT_MIN){
+		return -1;
+	}
+	x = x * (w - derv0 - z) / s;
+	if(_finite(x)){
+		return x;
+	}
 	return -1;
 }
 template <typename TYPE, bool CUDA>
@@ -122,7 +124,7 @@ void searchTool<TYPE, CUDA>::init_pos(MatXG &Ws,const MatXG &Grad, double loss, 
 	moveCount = 0;	
 	if(!searchOver){
 		cout<<"\n[linear search interrupted]";	
-		Step = avgStep * 2;
+		Step = avgStep ;
 		
 	}
 	switch(algorithm){
@@ -158,9 +160,8 @@ bool searchTool<TYPE, CUDA>::line_search(MatXG &Ws,const MatXG &Grad, double los
 		Deriv_t = direct.dot(Grad);
 		Loss_t = loss;
 		int jdg= wolfe_powell_judge();
-		if(jdg == OK || moveCount> maxMoveNum){		
-			init_pos(Ws, Grad, loss, jdg == OK /*&& Step < maxStepScale * avgStep*/);
-			
+		if(jdg == OK || moveCount > maxMoveNum){		
+			init_pos(Ws, Grad, loss, jdg == OK && Step < maxStep);			
 		}else{
 			if(jdg == LARGE){
 				maxPos = Step;
@@ -169,7 +170,7 @@ bool searchTool<TYPE, CUDA>::line_search(MatXG &Ws,const MatXG &Grad, double los
 			}
 			x = interpolation(Step, Loss, Loss_t, Deriv, Deriv_t);
 			Step = x;
-			if(x<=minPos || (maxPos>0 && x>=maxPos)){
+			if(x <= minPos || (maxPos > 0 && x >= maxPos)){
 				if(maxPos == 0){
 					Step = minPos * 2;
 				}else{
@@ -182,6 +183,7 @@ bool searchTool<TYPE, CUDA>::line_search(MatXG &Ws,const MatXG &Grad, double los
 	if(overFlag){
 		overPos = Pos;
 	};
+	//Dbg2(direct.norm(), Step);
 	Ws = Pos + Step * direct;
 	moveCount ++;
 	count ++;
@@ -204,7 +206,7 @@ searchTool<TYPE, CUDA>::searchTool(){
 	debug = false;
 	L_alf = NULL;
 	L_num = 5;
-	initStep = 0.051;
+	initStep = 0.1;
 	confirmRounds = 10;
 	//maxStepScale = 10;
 	reset();
@@ -335,6 +337,7 @@ void searchTool<TYPE, CUDA>::reset(){
 	avgCount = 1;
 	count = 0;	
 	recorderCount = 0;
+	maxStep = 5;
 	Z = 1000;
 	setConfirmRounds(confirmRounds);
 	setAlg(algorithm, L_num);

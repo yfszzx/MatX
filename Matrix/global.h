@@ -128,6 +128,8 @@ typedef Matrix<double, -1, -1> eMatD;
 #define MatXG MatGroup<TYPE, CUDA>
 #define MatXFG MatriX<float, CUDA>
 #define MatXDG MatriX<double, CUDA>
+#define MatXHost MatriX<TYPE, false>
+#define MatXDevice MatriX<TYPE, true>
 #define eigenMat Matrix<TYPE, -1, -1>
 
 #define Assert(illu) Global_Assert((illu), __LINE__, __FILE__);
@@ -142,3 +144,22 @@ void cuWrap::memHd2Hf(float *dest, const double *src, int size){
 
 }
 
+template <typename TYPE,  bool CUDA>
+class fastMat{
+protected:
+	static TYPE scale(const MatriX <TYPE, CUDA> mat){
+		return mat.scale;
+	}
+	static bool trans(const MatriX <TYPE, CUDA> mat){
+		return mat.trans();
+	}
+	static TYPE * prt(const MatriX <TYPE, CUDA> mat){
+		return mat.memPrt();
+	}
+	static TYPE realRows(const MatriX <TYPE, CUDA> mat){
+		return mat.realRows();
+	}
+	static TYPE realCols(const MatriX <TYPE, CUDA> mat){
+		return mat.realCols();
+	}
+};

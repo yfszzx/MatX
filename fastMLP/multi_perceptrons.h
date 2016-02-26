@@ -18,7 +18,7 @@ public:
 	string proj_path;
 	string file_name;
 	multi_perceptrons(string name);
-		void init_nervs();
+	void init_nervs();
 	void struct_init();
 	void struct_settted(bool save=true);
 	void weight_rand();

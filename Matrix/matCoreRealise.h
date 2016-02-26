@@ -302,6 +302,10 @@ int matCore<TYPE, CUDA>::size() const{
 	return sizeNum;	
 }
 template <typename TYPE, bool CUDA>
+void matCore<TYPE, CUDA>::resize(int row, int col) {
+	//return sizeNum;	
+}
+template <typename TYPE, bool CUDA>
 TYPE * matCore<TYPE, CUDA>::dataPrt(){
 	return mem->mem;	
 }

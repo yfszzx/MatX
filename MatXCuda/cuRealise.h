@@ -5,11 +5,23 @@ namespace gpu_funcs{
 			return 1.0f/(1.0f+__expf(-x));
 		}  
 	};
+	template <typename TYPE>
+	struct sigmDeriv {  
+		__device__ TYPE operator ()( TYPE & diff, TYPE & val) const {  
+			return diff * val * (1.0f - val);
+		}  
+	};
 
 	template <typename TYPE>
 	struct tanh {  
 		__device__ TYPE operator ()( TYPE & x) const {  
 			return 1.0f-2.0f/(1.0f+__expf(2*x));
+		}  
+	};
+	template <typename TYPE>
+	struct tanhDeriv {  
+		__device__ TYPE operator ()( TYPE & diff, TYPE & val) const {  
+			return diff * (1.0f - val * val);
 		}  
 	};
 	template <typename TYPE>
@@ -382,6 +394,26 @@ void cuWrap::tanh(float *arr,int dimen){
 void cuWrap::tanh(double *arr,int dimen){
 	thrust :: device_ptr <double> f(arr); 
 	thrust :: transform (f, f+dimen ,f , gpu_funcs::tanh<double>());
+}
+void cuWrap::sigmDeriv(float *diff, float * val, int dimen){
+	thrust :: device_ptr <float> d(diff); 
+	thrust :: device_ptr <float> v(val); 
+	thrust :: transform (d, d+dimen , v, d, gpu_funcs::sigmDeriv<float>());	
+}
+void cuWrap::sigmDeriv(double *diff, double * val, int dimen){
+	thrust :: device_ptr <double> d(diff); 
+	thrust :: device_ptr <double> v(val); 
+	thrust :: transform (d, d+dimen , v, d, gpu_funcs::sigmDeriv<double>());	
+}
+void cuWrap::tanhDeriv(float *diff, float * val, int dimen){
+	thrust :: device_ptr <float> d(diff); 
+	thrust :: device_ptr <float> v(val); 
+	thrust :: transform (d, d+dimen , v, d, gpu_funcs::tanhDeriv<float>());	
+}
+void cuWrap::tanhDeriv(double *diff, double * val, int dimen){
+	thrust :: device_ptr <double> d(diff); 
+	thrust :: device_ptr <double> v(val); 
+	thrust :: transform (d, d+dimen , v, d, gpu_funcs::tanhDeriv<double>());	
 }
 void cuWrap::square(float *arr,int dimen){
 	thrust :: device_ptr <float> f(arr); 
