@@ -43,7 +43,7 @@ bool searchTool<TYPE, CUDA>::momentum_grad(MatXG &Ws,const MatXG &Grad, double l
 	lastGrad = Grad;
 	count ++;
 	if(debug){
-		cout<<"\nls"<<loss;
+		cout<<"\n"<<count<<"\tls"<<loss;
 		getchar();
 	}
 	return true;

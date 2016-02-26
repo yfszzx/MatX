@@ -53,11 +53,11 @@ protected:
 		dataLoss = diff.squaredNorm()/batchSize/2;
 		loss = dataLoss + (regIn * Win.norm2() + regOut * Wout.norm2())/2;
 		diff = activeDerivFunc(dt.actFunc, diff, dt.Y[0]);
-		grad_out = hide.transpose() * diff ; 
+		grad_out = hide.T() * diff ; 
 		grad_Bout = diff.sum();
-		diff = diff * Wout.transpose() ; 
+		diff = diff * Wout.T() ; 
 		diff = diff.cwiseProduct ( (TYPE)1.0f - square(hide));
-		grad_in = dt.X[0].transpose() * diff ;
+		grad_in = dt.X[0].T() * diff ;
 		grad_Bin = diff.sum();
 		grads /= batchSize;
 		grad_in += regIn * Win;
@@ -78,7 +78,7 @@ protected:
 				float result = (dt.Y[0] - dt.T[0]).squaredNorm()/batchSize/2;
 				sm1 += (result - loss)/scl * (result - loss)/scl;
 				sm2 += d * d;
-				sm3 += (sm1 - sm2) *  (sm1 - sm2);
+				sm3 += ((result - loss)/scl - d) *  ((result - loss)/scl - d);
 				tmp -= scl;
 				Mach[i].assignment(j,tmp);
 			}

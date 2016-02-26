@@ -154,7 +154,7 @@ protected:
 		return mat.trans();
 	}
 	static TYPE * prt(const MatriX <TYPE, CUDA> mat){
-		return mat.memPrt();
+		return mat.dataPrt();
 	}
 	static TYPE realRows(const MatriX <TYPE, CUDA> mat){
 		return mat.realRows();
