@@ -1,31 +1,21 @@
 template <typename TYPE, bool CUDA>
-string MachineBase< TYPE, CUDA>::binFileName(int idx){	
+string MachineBase< TYPE, CUDA>::binFileName(int index){	
 	stringstream nm;
-	if(idx == NullValid){
-		nm<<machPath<<"machine_NullValid.bin";
-	}else if(idx == AllMachine){
+	if(index == AllMachine){
 		nm<<machPath<<"machine_*";
+		return nm.str();
+	};
+	if(foldIdx == NullValid){
+		nm<<machPath<<"machine_NullValid_";
 	}else{
-		nm<<machPath<<"machine_"<<idx<<".bin";
+		nm<<machPath<<"machine_"<<foldIdx<<"_";
+	}
+	if(index == MainFile){
+		nm<<"MainFile.bin";
+	}else{
+		nm<<index<<".bin";
 	}
 	return nm.str();
-}
-template <typename TYPE, bool CUDA>
-bool MachineBase< TYPE, CUDA>::overedFile(int foldIdx){
-	string binFl = binFileName(foldIdx);
-	bool over = fileIsExist(binFl);
-	if(over){
-		bool finished;
-		ifstream fl(binFl);
-		fl.read((char *)&finished, sizeof(bool));
-		if(!finished){
-			over = false;
-		}else{
-			cout<<"\n"<<binFl<<"已完成训练";
-		}
-		fl.close();
-	}
-	return over;
 }
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::saveConfig(ofstream & fl){
@@ -49,101 +39,79 @@ void MachineBase< TYPE, CUDA>::loadConfig(ifstream & fl){
 	}	
 };
 template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::save(bool finished){
-	string file = binFileName(dt.validFoldIdx);
+void MachineBase< TYPE, CUDA>::save(int index){
+	string file = binFileName(index);
 	cout<<"\n正在保存"<<file;
 	ofstream fl(file, ios::binary);
-	fl.write((char *)&finished, sizeof(bool));
 	saveConfig(fl);
 	saveParameters(fl);
-	bestMach.save(fl);
+	fl.write((char *)&trainRoundIdx, sizeof(int));
 	Mach.save(fl);	
-	fl.close();
-	if(finished){
-		cout<<"\n"<<file<<"已完成训练";
-	}
+	fl.close();	
 }
 template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::load(bool trainMod, int idx){
-	string file= binFileName(idx);
+void MachineBase< TYPE, CUDA>::load(int index){
+	string file= binFileName(index);
 	cout<<"\n正在读取"<<file;
 	ifstream fl(file, ios::binary);
-	bool finished;
-	fl.read((char *)&finished, sizeof(bool));
 	loadConfig(fl);
 	Mach.clear();
 	initMachine();
 	loadParameters(fl);
-	if(trainMod){
-		bestMach.read(fl);
-		Mach.read(fl);	
-
-	}else{
-		Mach.read(fl);
-	//Mach.read(fl);
-	}
+	fl.read((char *)&trainRoundIdx, sizeof(int));
+	Mach.read(fl);	
 	fl.close();
 }
-
+/*
 template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::showValidsResult(){	
-	if(supervise){
-		dt.loadDatas();
-		vector<MatX> rcdT;
-		vector<MatX> rcdY;
-		for(int i = 0; i< dt.crossFolds; i++){
-			if(!fileIsExist(binFileName(i))){
-				continue;
-			}
-			dt.makeValid(i);		
-			load(false, i);	
-			if(supervise){
-				cout<<"\nLoss:"<<getValidLoss()/dt.validInitLoss;
-			}else{
-				cout<<"\nLoss:"<<getValidLoss();
-			}
-			dt.showResult();
-			int num = 0;
-			for(int j = dt.preLen; j<dt.seriesLen; j++){
-				rcdT.push_back(dt.Tv[j]);
-				rcdY.push_back(dt.Yv[j]);
-				num += dt.Tv[j].size();	
-			}			
-			cout<<"\nsamples num:"<<num;
+void MachineBase< TYPE, CUDA>::clear(){
+	cout<<"\n是否要删除"<<machPath<<"下的所有算法文件?(y/n)";
+	string s;
+	cin>>s;
+	if(s[0]!='y'){
+		return;
+	}
+	struct _finddata_t fb;   //查找相同属性文件的存储结构体
+	string  path = binFileName(AllMachine, AllMachine);          
+	long    handle = _findfirst(path.c_str(),&fb);
+	if (handle != -1){
+		path = machPath + fb.name;
+		if(fileIsExist(path)){
+			remove(path.c_str());
 		}
-		
-		if(supervise){
-			MatXG validT(rcdT.data(), rcdT.size());
-			MatXG validY(rcdY.data(), rcdY.size());
-			cout<<"\n\nWhole data set:";
-			cout<<"\nLoss:"<<(validT - validY).squaredNorm()/validT.size()/validT.MSE();
-			cout<<"\tsamples num:"<<validT.size();
-			dt.showValidsResult(validT, validY);
+		while (0 == _findnext(handle,&fb)){
+			path = machPath + fb.name;
+			if(fileIsExist(path)){
+				remove(path.c_str());
+			}
 		}
 	}
-};
+	path = machPath + "recorder_*.csv";
+	long    handle = _findfirst(path.c_str(),&fb);
+	if (handle != -1){
+		path = machPath + fb.name;
+		if(fileIsExist(path)){
+			remove(path.c_str());
+		}
+		while (0 == _findnext(handle,&fb)){
+			path = machPath + fb.name;
+			if(fileIsExist(path)){
+				remove(path.c_str());
+			}
+		}
+	}
+}*/
+
 
 template <typename TYPE, bool CUDA>
-TYPE MachineBase< TYPE, CUDA>::getValidLoss(){
-	predictCore(dt.Yv,  dt.Xv, dt.seriesLen);
-	if(supervise){
-		double ls = 0;
-		for(int i = dt.preLen ; i < dt.seriesLen; i++){
-			ls += (dt.Yv[i] - dt.Tv[i]).norm2();
-		}
-		return ls/dt.validNum/(dt.seriesLen - dt.preLen)/2;
-	}else{
-		return unsupervisedExamine(dt.Yv, dt.Xv, dt.seriesLen);		
-	}
-};
-template <typename TYPE, bool CUDA>
-MachineBase< TYPE, CUDA>::MachineBase(dataSetBase<TYPE, CUDA> & dtSet, string path):dt(dtSet){
-	foldsMach = NULL;
+MachineBase< TYPE, CUDA>::MachineBase(dataSetBase<TYPE, CUDA> & dtSet, string path, int foldIndex):dt(dtSet){
 	inputNum = dt.inputNum;
 	unsuperviseDim = inputNum;
 	outputNum = dt.outputNum;
 	machPath = path;
 	supervise = true;
+	finishFlag = false;
+	foldIdx = foldIndex;
 };
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::initConfig(){
@@ -154,71 +122,13 @@ void MachineBase< TYPE, CUDA>::initSet(int configIdx, string name, float val){
 	while(configIdx >= configRecorder.size()){
 		configRecorder.push_back(0);
 		configName.push_back("");
-
 	}
 	configName[configIdx] = name;
 	configRecorder[configIdx]= val;
 	setConfigValue(configIdx, val);
-
 };
-template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::setBestMach(){
-	bestMach = Mach;
-}
 template <typename TYPE, bool CUDA>
 MachineBase< TYPE, CUDA>::~MachineBase(){
-	if(foldsMach != NULL){
-		delete [] foldsMach;
-	}
-};
-template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::predictInit(){
-	if(foldsMach != NULL){
-		delete [] foldsMach;
-	}
-	if(supervise){
-		foldsMach = new MatGroup<TYPE ,CUDA>[dt.crossFolds];
-		for(int i = 0; i< dt.crossFolds; i++){
-			if(!fileIsExist(binFileName(i))){
-				continue;
-			}
-			load(false, i);
-			foldsMach[i] = Mach;
-		}
-	}else{
-		if(!fileIsExist(binFileName(NullValid))){
-			Assert("非监督算法还未训练完毕");
-		}
-		load(false, NullValid);
-	}
-	predictHead();
-};
-template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::predict(MatriX<TYPE, CUDA> * _Y, MatriX<TYPE, CUDA>* _X, int seriesLen = 1){
-	if(supervise){
-		MatriX<double, CUDA> * Yt = new MatriX<double, CUDA>[seriesLen];
-		for(int i = 0; i< dt.crossFolds; i++){
-			if(foldsMach[i].num()){
-				continue;
-			}
-			Mach = foldsMach[i];
-			predictCore(_Y, _X, seriesLen);
-			if(i == 0){
-				for(int k = 0; k < seriesLen; k ++){
-					Yt[k] = _Y[k];
-				}
-			}else{
-				for(int k = 0; k < seriesLen; k ++){
-					Yt[k].add(_Y[k]);
-				}
-			}
-		}
-		for(int k = 0; k < seriesLen; k ++){
-			_Y[k] = Yt[k]/dt.crossFolds;
-		}
-	}else{
-		predictCore(_Y, _X, seriesLen);
-	}
 };
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::operator ()(string s, float val){
@@ -243,7 +153,6 @@ void MachineBase< TYPE, CUDA>::kbGet(string s){
 	cin>>val;
 	(*this)(s, val);
 };
-
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::showConfigSetting(){
 	for(int i = 0; i <configName.size(); i ++){
@@ -253,144 +162,195 @@ void MachineBase< TYPE, CUDA>::showConfigSetting(){
 	}
 };
 template <typename TYPE, bool CUDA>
-void * MachineBase<TYPE, CUDA>::threadTrain( void * _this){
-	srand(time(NULL) + ((MachineBase<TYPE, CUDA> *)_this)->randSeeder);
-	MachineBase<TYPE, CUDA> & t = * (MachineBase<TYPE, CUDA> *)_this;
-	t.trainCore();
-	t.batchFinished = t.trainAssist();	
-	return NULL;
-}
-template <typename TYPE, bool CUDA>
-void * MachineBase<TYPE, CUDA>::threadMakeBatch( void * _this){	
-	dataSetBase<TYPE, CUDA> & dt = ((ANNBase<TYPE, CUDA> *)_this)->dt;
-	srand(time(NULL) + ((MachineBase<TYPE, CUDA> *)_this)->randSeeder);
-	dt.makeBatch(((MachineBase<TYPE, CUDA> *)_this)->getBatchSize());
-	return NULL;
-}
-template <typename TYPE, bool CUDA>
-void MachineBase<TYPE, CUDA>::kbPause(){	
-	if(_kbhit()){
-		char s = getchar();
-		if(s == 'p'||s=='P'){
-			dt.pauseAction(this);
-		}
-	}
-}
-template <typename TYPE, bool CUDA>
-void MachineBase<TYPE, CUDA>::loadBatch(){
-	dt.loadBatch();
-	batchInitLoss = dt.batchInitLoss;
-	batchSize = dt.batchSize;
-}
-template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::trainInitialize(){
-	cout<<"\n训练进行中.....";
-	Mach.clear();
-	initMachine();
-	bestMach = Mach;
-	string rcdFl = machPath + "recorder.csv";
-	if(fileIsExist(binFileName(dt.validFoldIdx))){
-		load(true, dt.validFoldIdx);
-		showConfigSetting();
-		rcdFile.open(rcdFl, ios::app);
-		rcdFile<<"[continue]"<<endl;	
-	}else{
-		rcdTimer.set();
-		if( dt.validFoldIdx == 0){
-			rcdFile.open(rcdFl);
-			recordFileHead();
-		}else{
-			rcdFile.open(rcdFl, ios::app);
-		}
-		rcdFile<<"[valid "<<dt.validFoldIdx<<"]"<<endl;
-	}
-
-}
-template <typename TYPE, bool CUDA>
 int MachineBase< TYPE, CUDA>::getUnsupDim(){
 	return unsuperviseDim;
 }
 template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::clear(){
-		cout<<"\n是否要删除"<<machPath<<"下的所有算法文件?(y/n)";
-		string s;
-		cin>>s;
-		if(s[0]!='y'){
-			return;
-		}
-		struct _finddata_t fb;   //查找相同属性文件的存储结构体
-		string  path = binFileName(AllMachine);          
-		long    handle = _findfirst(path.c_str(),&fb);
-		if (handle != -1){
-			path = machPath + fb.name;
-			if(fileIsExist(path)){
-			remove(path.c_str());
-			}
-			while (0 == _findnext(handle,&fb)){
-						path = machPath + fb.name;
-						if(fileIsExist(path)){
-							remove(path.c_str());
-						}
-			}
-		}
-		path = machPath + "recorder.csv";
-		if(fileIsExist(path)){
-			remove(path.c_str());
-		}
-		
+void MachineBase<TYPE, CUDA>::unsupervise(){
+	supervise = false;
 }
 template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::trainRun(){
-	checkFold(machPath);
-	dt.loadDatas();
-	for(int i = 0; i< dt.crossFolds; i++){			
-		trainMain(i);
-	}
-	if(!supervise){
-		trainMain(NullValid);
-	}
-}
+void MachineBase< TYPE, CUDA>::predictInit(){
+	predictHead();
+};
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::predict(MatriX<TYPE, CUDA> * _Y, MatriX<TYPE, CUDA>* _X, int seriesLen = 1){
+/*
+	if(supervise){
+		MatriX<double, CUDA> * Yt = new MatriX<double, CUDA>[seriesLen];
+		for(int i = 0; i< dt.crossFolds; i++){
+			if(foldsMach[i].num()){
+				continue;
+			}
+			Mach = foldsMach[i];
+			predictCore(_Y, _X, seriesLen);
+			if(i == 0){
+				for(int k = 0; k < seriesLen; k ++){
+					Yt[k] = _Y[k];
+				}
+			}else{
+				for(int k = 0; k < seriesLen; k ++){
+					Yt[k].add(_Y[k]);
+				}
+			}
+		}
+		for(int k = 0; k < seriesLen; k ++){
+			_Y[k] = Yt[k]/dt.crossFolds;
+		}
+	}else{
+		predictCore(_Y, _X, seriesLen);
+	}*/
+};
+/*
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::showValidsResult(){	
+	/ *if(supervise){
+		dt.loadDatas();
+		vector<MatX> rcdT;
+		vector<MatX> rcdY;
+		for(int i = 0; i< dt.crossFolds; i++){
+			if(!fileIsExist(binFileName(i))){
+				continue;
+			}
+			dt.makeValid(i);		
+			load(false, i);	
+			if(supervise){
+				cout<<"\nLoss:"<<getValidLoss()/dt.validInitLoss;
+			}else{
+				cout<<"\nLoss:"<<getValidLoss();
+			}
+			dt.showResult();
+			int num = 0;
+			for(int j = dt.preLen; j<dt.seriesLen; j++){
+				rcdT.push_back(dt.Tv[j]);
+				rcdY.push_back(dt.Yv[j]);
+				num += dt.Tv[j].size();	
+			}			
+			cout<<"\nsamples num:"<<num;
+		}
+
+		if(supervise){
+			MatXG validT(rcdT.data(), rcdT.size());
+			MatXG validY(rcdY.data(), rcdY.size());
+			cout<<"\n\nWhole data set:";
+			cout<<"\nLoss:"<<(validT - validY).squaredNorm()/validT.size()/validT.MSE();
+			cout<<"\tsamples num:"<<validT.size();
+			dt.showValidsResult(validT, validY);
+		}
+	}* /
+};*/
 
 template <typename TYPE, bool CUDA>
-void MachineBase<TYPE, CUDA>::trainMain(int idx){
-	if(overedFile(idx)){
-		return;
-	}
-	dt.makeValid(idx);
-	dt.show();
+TYPE MachineBase< TYPE, CUDA>::getValidLoss(){
+	/*predictCore(dt.Yv,  dt.Xv, dt.seriesLen);
+	if(supervise){
+		double ls = 0;
+		for(int i = dt.preLen ; i < dt.seriesLen; i++){
+			ls += (dt.Yv[i] - dt.Tv[i]).norm2();
+		}
+		return ls/dt.validNum/(dt.seriesLen - dt.preLen)/2;
+	}else{
+		return unsupervisedExamine(dt.Yv, dt.Xv, dt.seriesLen);		
+	}*/
+};
 
-	trainInitialize();		
-	trainCount = 1;	
+
+template <typename TYPE, bool CUDA>
+void * MachineBase<TYPE, CUDA>::threadTrain( void * _this){	
+	MachineBase<TYPE, CUDA> & mach = *(MachineBase<TYPE, CUDA> *)_this;
+	srand(time(NULL) + mach.randSeeder);
+	mach.trainCore();
+	mach.finishFlag = mach.trainAssist();	
+	return NULL;
+}
+template <typename TYPE, bool CUDA>
+void * MachineBase<TYPE, CUDA>::threadMakeBatch( void * _this){	
+	MachineBase<TYPE, CUDA> & mach = *(MachineBase<TYPE, CUDA> *)_this;
+	srand(time(NULL) + mach.randSeeder);
+	mach.dt.makeBatch(mach.foldIdx, mach.getBatchSize());
+	return NULL;
+}
+template <typename TYPE, bool CUDA>
+void MachineBase<TYPE, CUDA>::loadBatch(){
+	batchInitLoss =  dt.loadBatch(foldIdx, X, Y, T);
+	batchSize = X[0].rows();	
+}
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::loadMach(int rndIdx){
+	Mach.clear();
+	initMachine();	
+	if(fileIsExist(binFileName(MainFile))){
+		load(rndIdx);
+	}
+}
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::trainInitialize(){
+	if(Mach.num() == 0){
+		loadMach(MainFile);
+		showConfigSetting();
+		dt.setDataList(trainDataList, TrainDataSet, foldIdx);
+	}
+	stringstream rcdFl;
+	rcdFl<<machPath<<"recorder_"<<foldIdx<<".csv";
+	if(fileIsExist(binFileName(MainFile))){
+		rcdFile.open(rcdFl.str(), ios::app);
+		rcdFile<<"[continue]"<<endl;	
+	}else{
+		rcdTimer.set();
+		rcdFile.open(rcdFl.str());
+		recordFileHead();
+	}
+	dt.loadDataList(foldIdx, trainDataList);
 	trainHead();
-	if(dt.randBatch){
-		dt.makeBatch(getBatchSize());			
+	trainCount = 0;	
+}
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::trainFinished(){	
+	trainTail();
+	trainRoundIdx ++;
+	rcdFile.close();
+	save(MainFile);
+	save(trainRoundIdx);	
+}
+
+template <typename TYPE, bool CUDA>
+void MachineBase<TYPE, CUDA>::train(){
+	trainInitialize();		
+	pthread_t tid1, tid2;
+	void *ret1,*ret2;
+	dt.makeBatch(foldIdx, getBatchSize());	
+	if(dt.randBatch){				
 		do{
-			loadBatch();
-			pthread_t tid1, tid2;
-			void *ret1,*ret2;
-			pthread_create(&tid1, NULL, threadTrain, (void *)this);
+			trainCount ++;
+			loadBatch();			
 			randSeeder = rand();
+			pthread_create(&tid1, NULL, threadTrain, (void *)this);			
 			pthread_create(&tid2, NULL, threadMakeBatch, (void *)this);			
 			pthread_join(tid1, &ret1);
 			pthread_join(tid2, &ret2);
-			if(batchFinished){
+			if(finishFlag){
 				break;
-			}
-			trainCount ++;
-			kbPause();		
+			}			
 		}while(1);
-
 	}else{
-		dt.makeBatch();
 		loadBatch();
 		trainCore();
 		trainAssist();
 	}
-	trainTail();
-	save(true);
-	rcdFile.close();
+	trainFinished();	
 }
 template <typename TYPE, bool CUDA>
-void MachineBase<TYPE, CUDA>::unsupervise(){
-	supervise = false;
+void MachineBase<TYPE, CUDA>:: validate(int validNum){
+	if(Mach.num() == 0){
+		loadMach(MainFile);
+		showConfigSetting();
+		dt.setDataList(validDataList, ValidDataSet, foldIdx);
+	}
+	dt.loadDataList(foldIdx, validDataList);
+	dt.makeBatch(foldIdx, validNum);	
+	loadBatch();			
+	predict(Y, X, dt.seriesLen);
+	float l = dt.getLoss(Y, T);
+	cout<<"\nvalid loss"<<dt.getLoss(Y, T)/batchInitLoss;
+	
 }

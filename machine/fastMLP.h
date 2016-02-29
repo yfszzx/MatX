@@ -93,13 +93,12 @@ protected:
 		Wout = Bin + nodes;
 		Bout = Wout + nodes * outputNum;
 		Mach<<W;
-	}virtual void predictHead(){
-		W.exportData(Win, true);
 	}
 	virtual void predictCore( MatXDevice * _Y, MatXDevice * _X, int len = 1) {		
 		int num = _X[0].rows();
 		MatXDevice tmpY(num, outputNum);
-		MatXDevice tmpH(num, nodes);		
+		MatXDevice tmpH(num, nodes);	
+		W.exportData(Win, true);
 		forward(_X[0], prt(tmpY), prt(tmpH));
 		_Y[0] = tmpY;
 	}
@@ -171,12 +170,20 @@ public:
 		initConfig();
 		samplesNum = 0;
 		hide  = NULL;
+		Win = NULL;
+		grad_in = NULL;
 	};
 	~fastMLP(){
 		if(hide != NULL){
 			cuWrap::free(hide);
 			cuWrap::free(hideDiff);
 			cuWrap::free(diff);
-		}		
+		}
+		if(Win != NULL){
+			cuWrap::free(Win);			
+		}
+		if(grad_in != NULL){
+			cuWrap::free(grad_in);
+		}
 	}
 };

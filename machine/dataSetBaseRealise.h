@@ -1,327 +1,142 @@
 template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::makeTrainAndValidList(int * &valid, int * &train){
-	validNum = 0;
-	trainNum = 0;
-	vector<char> list;
-	int Vnum = 0;
-	for(int i = 0; i<dataNum; i++){
-		if(validBoolList[i] == 1){
-			Vnum ++;
-		}
-	}
-	for(int i = 0; i<dataNum; i++){
-		if(validBoolList[i] == 1){
-			if(rand()%1000 < float(validBatchNum)/Vnum * 1000){
-				validNum ++;
-				list.push_back(true);
-			}else{
-				list.push_back(false);
-			}
-		}else if(validBoolList[i] == 0){
-			trainNum ++;
-		}
-	}	
-	train = new int[ trainNum ];
-	valid = new int[ validNum ];
-	int c_t = 0;
-	int c_v = 0;
-	int pos = 0;
-	for(int i = 0; i<dataNum; i++){
-		if(validBoolList[i] == 1){
-			if(list[pos]){
-				valid[c_v] = i;
-				c_v++;
-			}
-			pos ++;
-		}else if(validBoolList[i] == 0){
-			train[c_t] = i;
-			c_t++;
-		}
-	}
-	if(validSampleList != NULL){
-		delete [] validSampleList;
-	}
-	validSampleList = new char[list.size()];
-	memcpy(validSampleList, list.data(), _msize(validSampleList));
-
+int dataSetBase<TYPE, CUDA>::thrdIdx(int foldIdx){
+	return foldIdx % threadsNum;
 }
 template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::featureFilter(bool * featureList){
-	int newDim = 0;
-	for(int i = 0; i <  XDim; i++){
-		if(featureList[i]){
-			newDim ++;
-		}
-	}	
-	for(int s = 0; s < seriesLen; s++){
-		for(int i = 0; i < X0[s].cols(); i++){
-			for(int f = 0; f < X0[s].rows(); f++){
-				X0[s].assignment(i * newDim + f, X0[s][i * XDim + f]);				
-			}
-		}
-	}
-	XDim = newDim;
-};
+float dataSetBase<TYPE, CUDA>::loadBatch(int foldIdx, MatX * & x, MatX * & y, MatX * & t){
+	int idx = thrdIdx(foldIdx);
+	swap(Xpre[idx], X[idx]);
+	swap(Tpre[idx], T[idx]);
+	x = X[idx];
+	y = Y[idx];
+	t = T[idx];
+	return initLoss[idx];
+}
 template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::makeValid(){
-	makeValidList(validFoldIdx);
-	int *validList;
-	makeTrainAndValidList(validList, trainList);
-	validInitLoss = 0;
+void dataSetBase<TYPE, CUDA>::pretreat(MatX &x){
+	MatX ret;
+	for(int i = 0; i < pretreatment.size(); i++){
+		pretreatment[i]->predict(&ret, &x);	
+		x = ret;
+	}	
+	
+}
+template <typename TYPE, bool CUDA>
+void dataSetBase<TYPE, CUDA>::makeData(int foldIdx, int * list, int num){	
+	int idx = thrdIdx(foldIdx);
+	dataSize[idx] = num;
+	initLoss[idx] = 0;	
 	for(int i = 0; i< seriesLen; i ++){
-		Xv[i] = X0[i].colsMapping(validList, validNum).T();
-		Tv[i] = T0[i].colsMapping(validList, validNum).T();
+		Xpre[idx][i] = X0[i].colsMapping(list, num).T();		
+		Tpre[idx][i] = T0[i].colsMapping(list, num).T();
+		if(pretreatment.size() > 0){
+			pretreat(Xpre[idx][i]);
+		}
 		if(i >= preLen){
-			validInitLoss += Tv[i].allMSE()/2 * outputNum;
+			initLoss[idx] += Tpre[idx][i].allMSE()/2 * outputNum;
 		}
 	}		
-	validInitLoss /= (seriesLen - preLen);
-	delete [] validList;
+	initLoss[idx] /= (seriesLen - preLen);
+}
+template <typename TYPE, bool CUDA>
+void dataSetBase<TYPE, CUDA>::loadDataList(int foldIdx,  vector<int> & list){	
+	int idx = thrdIdx(foldIdx);
+	subDataNum[idx] = list.size();
+	dataList[idx] = list.data();		
+}
+template <typename TYPE, bool CUDA>
+void dataSetBase<TYPE, CUDA>::makeBatch(int foldIdx, int num){	
+	int idx = thrdIdx(foldIdx);
+	if(randBatch){
+		vector<int> list;
+		for(int i = 0; i < num; i++){
+			if(float(rand()%10000) / 10000 * subDataNum[idx] < num){
+				list.push_back(i);				
+			}			
+		}
+		makeData(foldIdx, list.data(), list.size());
 
+	}else{
+		makeData(foldIdx, dataList[idx], subDataNum[idx]);
+	}	
 }
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::initDataSpace(){
-	X0 = new  MatriX<TYPE, false>[seriesLen];
-	T0 = new  MatriX<TYPE, false>[seriesLen];
-	for(int i = 0; i< seriesLen; i++){
-		X0[i] =  MatriX<TYPE, false>::Zero(inputNum, dataNum);
-		T0[i] =  MatriX<TYPE, false>::Zero(outputNum, dataNum);
+	if(pretreatment.size() == 0){
+		X0 = new  MatriX<TYPE, false>[seriesLen];
+		T0 = new  MatriX<TYPE, false>[seriesLen];
+		for(int i = 0; i< seriesLen; i++){
+			X0[i] =  MatriX<TYPE, false>::Zero(inputNum, dataNum);
+			T0[i] =  MatriX<TYPE, false>::Zero(outputNum, dataNum);
+		}
+		X = new  MatX * [threadsNum];
+		Y = new  MatX * [threadsNum];
+		T = new  MatX * [threadsNum];
+		dataSize = new int[threadsNum];
+		initLoss = new double[threadsNum];
+		dataList = new int *[threadsNum];
+		subDataNum = new int[threadsNum];
+		Xpre = new  MatX * [threadsNum];
+		Tpre = new  MatX * [threadsNum];
+
+		for(int i = 0; i < threadsNum; i++){
+			dataList[i] = NULL;
+			X[i] = new MatX[seriesLen];
+			Y[i] = new MatX[seriesLen];
+			T[i] = new MatX[seriesLen];
+			Xpre[i] = new MatX[seriesLen];
+			Tpre[i] = new MatX[seriesLen];
+		}
+		
 	}
-	X = new  MatriX<TYPE, CUDA>[seriesLen];
-	Y = new  MatriX<TYPE, CUDA>[seriesLen];
-	T = new  MatriX<TYPE, CUDA>[seriesLen];
-	Xv = new  MatriX<TYPE, CUDA>[seriesLen];
-	Tv = new  MatriX<TYPE, CUDA>[seriesLen];
-	Yv = new  MatriX<TYPE, CUDA>[seriesLen];
-	Xhost = new  MatriX<TYPE, false>[seriesLen];
-	Thost = new  MatriX<TYPE, false>[seriesLen];
 
 }
-
 template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::makeBatch(int size){
-	/*if(validFoldIdx == -1){
-		Assert("还未设置训练集和验证集,执行makeValid(int validIdx)设置");
-	}*/
-	batchInitLoss = 0;
-	if(randBatch){
-		batchSize = size;
-		int * batchList ;		
-		batchList = new int[batchSize];
-		float tm;
-		for(int i = 0; i<batchSize; i++){
-			batchList[i] = trainList[Mrand(trainNum)];
-		}
-		for(int i = 0; i< seriesLen; i++){
-			Xhost[i] = X0[i].colsMapping(batchList, batchSize).T();
-			Thost[i] = T0[i].colsMapping(batchList, batchSize).T();
-			batchInitLoss +=  Thost[i].allMSE()/2 * outputNum;
-
-		}		
-		delete [] batchList;
-	}else{
-		batchSize = trainNum;
-		for(int i = 0; i< seriesLen; i++){
-			Xhost[i] = X0[i].colsMapping(trainList, batchSize).T();
-			Thost[i] = T0[i].colsMapping(trainList, batchSize).T();
-			batchInitLoss += Thost[i].allMSE()/2 ;
-		}
-	}
-	batchInitLoss /= seriesLen;
-}
-template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::init(int iptNum, int optNum){
+void dataSetBase<TYPE, CUDA>::init(int iptNum, int optNum, int actf = LINEAR, bool seri = false){
 	inputNum = iptNum;
 	outputNum = optNum;	
-}
-template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::makeValid(int validIdx){
-	validFoldIdx = validIdx;
-	if(validIdx != NullValid){
-		if(validIdx < 0 || validIdx >= crossFolds){
-			Assert("验证集序号超出范围");
-		}
-		if(validBoolList != NULL){
-			delete [] validBoolList;
-			delete [] trainList;
-		}
-		validBoolList = new char[dataNum];
-	
-		makeValid();	
-		maxCorr = -1;
-	}else{
-		if(trainList != NULL){
-			delete [] trainList;
-		}
-		trainList = new int[ dataNum ];
-		for(int i = 0; i<dataNum; i++){
-			trainList[i] = i;
-		}
-		validInitLoss = 1;
-		trainNum = dataNum;
-		validNum = 0;
-	}
-}
-template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::loadBatch(){
-	for(int i = 0; i< seriesLen; i++){
-		X[i] = Xhost[i];
-		T[i] = Thost[i];
-	}
-}
-template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::loadDatas(){
-	createSamples();
-	if(dataNum < crossFolds){
-		crossFolds = dataNum;
-	}
-	loatTestSamples();
+	actFunc = (activeFunctionType)actf;
+	seriesMod = seri;
 }
 template <typename TYPE, bool CUDA>
 dataSetBase<TYPE, CUDA>::dataSetBase(){
-	trainList = NULL;
-	validBoolList = NULL;
 	X0 = NULL;
 	dataNum = 0;
-	inputNum = 0;
-	outputNum = 0;
-	validFoldIdx = -1;
-	maxCorr = -1;
+	threadsNum = 1;
 	preLen = 0;
 	seriesLen = 1;
 	randBatch = false;
-	crossFolds = 5;
-	actFunc = LINEAR;
-	seriesMod = false;
-	validBatchNum = 10000;
-	validSampleList = NULL;	
 }
 template <typename TYPE, bool CUDA>
 dataSetBase<TYPE, CUDA>::~dataSetBase(){
-	if(validBoolList != NULL){
-		delete [] validBoolList;
-		delete [] trainList;
-	}
 	if(X0 != NULL){
+		for(int i = 0; i < threadsNum; i++){
+			delete [] X[i];
+			delete [] Y[i];
+			delete [] T[i];
+			delete [] Xpre[i];
+			delete [] Tpre[i];
+		}
+		delete [] X;
+		delete [] Y;
+		delete [] T;
+		delete [] Xpre;
+		delete [] Tpre;
+
 		delete [] X0;
 		delete [] T0;
-		delete [] X;
-		delete [] T;
-		delete [] Y;
-		delete [] Xv;
-		delete [] Tv;
-		delete [] Yv;
-		delete [] Xhost;
-		delete [] Thost;
-	}
-	if(validSampleList != NULL){
-		delete [] validSampleList;
-	}
-}
-template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::loadSamples(const TYPE * _X, const TYPE * _T, int _dataNum){
-	if(seriesMod){
-		Assert("序列数据调用loadSamples函数缺少sample的序列长度参数");
-	}
-	dataNum = _dataNum;
-	initDataSpace();
-	X0[0].importData(_X);
-	T0[0].importData(_T);	
-	
-	for(int i = 0; i < pretreatment.size(); i++){
-		MatX tmpX;
-		MatX tmpY;
-		tmpX = X0[0].T();	
-		pretreatment[i]->predict(&tmpY, &tmpX);
-		X0[0] = tmpY.T();
-		inputNum = pretreatment[i]->getUnsupDim();
+		delete [] dataSize;
+		delete [] initLoss;
+		
 	}	
-
-};
-template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::makeValidList(int vldIdx){		
-	for(int i = 0; i< dataNum ; i++){
-		validBoolList[i] = (i%crossFolds == vldIdx);
-	}
 }
 
 template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::show(){
-	cout<<"\ninputNum:"<<inputNum<<"\toutputNum:"<<outputNum<<"\trandBatch："<<randBatch;
-	cout<<"\ncrossFolds:"<<crossFolds<<"\tvalidIdx:"<<validFoldIdx<<"\tdataNum:"<<dataNum<<"\ttrainNum:"<<trainNum<<"\tvalidNum"<<validNum;
-	cout<<"\nactFunc"<<actFunc;
-}
-template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::showValidCorrel(){
-	float corr;
-	if(preLen == 0){
-		corr = Yv[0].correl(Tv[0]);
-	}else{
-
-		double ysum = 0; 
-		double tsum = 0;
-		double dot = 0;
-		double ysn = 0;
-		double tsn = 0;
-		int n = 0;
-		for(int i = preLen ; i < seriesLen; i++){
-			ysum += Yv[i].allSum();
-			tsum += Tv[i].allSum();
-			dot += Yv[i].dot(Tv[i]);
-			ysn += Yv[i].squaredNorm();
-			tsn += Tv[i].squaredNorm();
-			n += Yv[i].size();
-		}
-		corr =  (n * dot - ysum * tsum)/sqrt(( n * ysn - ysum * ysum) *( n * tsn - tsum * tsum));
-	}
-
-	if(maxCorr == -1 || maxCorr< corr){
-		if(_finite(corr)){
-			maxCorr = corr;
-		}
-
-	}
-	cout<<"\ncorrel:"<<corr<<"\tmaxCorr"<<maxCorr;
-}
-
-template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::outputValidCsv(string path, bool Continue){
-	ofstream fl(path);
-	for(int v = 0; v < validNum; v++){
-		for(int i = preLen; i < seriesLen; i++){
-			for(int o = 0; o < outputNum; o++){
-				fl<<Yv[i](v, o)<<",";
-			}
-			fl<<",";
-			for(int o = 0; o < outputNum; o++){
-				fl<<Tv[i](v, o)<<",";
-			}
-			fl<<endl;
-		}
-	}
-	fl.close();
-	cout<<"\n已保存"<<path;
-};
-
-template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::set(string name, float val){
+void dataSetBase<TYPE, CUDA>::operator()(string name, float val){
 	if(name == "randBatch"){
 		randBatch = val;
 		return;
 	}
-	if(name == "crossFolds"){
-			crossFolds = val;
-			return;
-	}
-
-	if(name == "validNum"){
-		validBatchNum = val;
-		return;
-	}
-	if(name == "activeFunc"){
-		actFunc = (activeFunctionType)((int)val);
-		return;
-	}	
 	if(seriesMod){
 		if(name == "preLen"){
 			preLen = val;
@@ -332,16 +147,73 @@ void dataSetBase<TYPE, CUDA>::set(string name, float val){
 			return;
 		}
 	}
+	if(name == "threadsNum"){
+		threadsNum = val;
+		return;
+	}
+	if(name == "foldsNum"){
+		foldsNum = val;
+		return;
+	}
+	if(name == "testNum"){
+		testNum = val;
+		return;
+	}
 	cout<<"\n不存在参数 "<<name;
-};
+}
 
 template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::operator()(string name, float val){
-	set(name, val);
-}
+void dataSetBase<TYPE, CUDA>::loadDataSet(const TYPE * _X, const TYPE * _T, int _dataNum){
+	if(seriesMod){
+		Assert("序列数据调用loadSamples函数缺少sample的序列长度参数");
+	}
+	dataNum = _dataNum;
+	initDataSpace();
+	X0[0].importData(_X);
+	T0[0].importData(_T);
+};
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::setPretreat(MachineBase<TYPE, CUDA> * pre){
 	pretreatment.push_back(pre);
 	pre->predictInit();
-	
+	inputNum = pre->getUnsupDim();
 }
+template <typename TYPE, bool CUDA>
+void dataSetBase<TYPE, CUDA>::setDataList(vector<int> & list, char mod, int foldIdx){
+	list.clear();
+	switch(mod){
+	case TrainDataSet:
+		for(int i = 0; i < dataNum - testNum; i++){
+			if(i % foldsNum != foldIdx){
+				list.push_back(i);			
+			}
+		}
+		break;
+	case ValidDataSet:
+		for(int i = 0; i < dataNum - testNum; i++){
+			if(i % foldsNum == foldIdx){
+				list.push_back(i);			
+			}
+		}
+		break;
+	case TestDataSet:
+		for(int i = dataNum - testNum; i < dataNum; i++){
+				list.push_back(i);			
+		}
+		break;
+	case PredictDataSet:
+		for(int i = 0; i< dataNum; i++){
+			list.push_back(i);		
+		}
+		break;
+	}
+};
+template <typename TYPE, bool CUDA>
+float dataSetBase<TYPE, CUDA>:: getLoss(MatX * y, MatX * t){
+	double loss = 0;
+	for(int i = preLen; i< seriesLen; i ++){
+		loss += (y[i] - t[i]).square().allSum();
+	}
+	loss /= (seriesLen - preLen) * t[0].rows() * 2;
+	return  loss * outputNum;
+}	

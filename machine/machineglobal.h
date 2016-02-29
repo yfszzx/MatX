@@ -72,7 +72,13 @@ namespace ANNGlobal{
 	}
 	
 	const static int NullValid = -1;
+	
+	const static int MainFile = -1;
 	const static int AllMachine = -2;
+	const static int TrainDataSet = 1;
+	const static int ValidDataSet = 2;
+	const static int TestDataSet = 3;
+	const static int PredictDataSet = 4;
 }
 using namespace ANNGlobal;
 template <typename TYPE, bool CUDA>

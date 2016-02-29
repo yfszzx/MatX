@@ -1,29 +1,29 @@
 template <typename TYPE, bool CUDA>
 class sinSample: public dataSetBase<TYPE, CUDA>{
-public:
+private:
 	int dtNum;
-	sinSample(int num){
-		init(1, 1);
-		set("activeFunc", LINEAR);
-		dtNum = num;
-	}
-	void createSamples(){		
+protected:
+	
+public:
+	void getDataSet(){		
 		TYPE *tX = new TYPE[dtNum];
 		TYPE *tT = new TYPE[dtNum];
 		for(int i = 0; i<dtNum; i++){
 			tX[i] = 3.1415 * TYPE(Mrand(10000) -5000)/10000;
 			tT[i] = sin(tX[i]);
 		}
-		loadSamples(tX, tT, dtNum);
+		loadDataSet(tX, tT, dtNum);
 		delete [] tX;
 		delete [] tT;
 	}
-	void showResult(){
-		cout<<"\ncorrel:"<<Yv[0].correl(Tv[0]);
+	void showResult(){		
 	}
-	virtual void showValidsResult(MatGroup<TYPE, CUDA> &T, MatGroup<TYPE, CUDA> &Y){
-		cout<<"\ncorr:"<<T.correl(Y);
-	};
+	sinSample(int num, int thrNum){
+		init(1, 1, LINEAR, false);
+		(*this)("threadsNum",thrNum);
+		dtNum = num;
+	}
+	
 };
 
 #include "sampleDataSet/mnist.h"
