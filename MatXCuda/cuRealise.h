@@ -172,8 +172,6 @@ void cuWrap::initCuda(bool showGpuInfo){
 	cuda_inited = true;
 	
 	cuda_params::init_one_array();
-	CURAND_CHECK( curandCreateGenerator(&curandGenerator, CURAND_RNG_PSEUDO_DEFAULT) );
-	CURAND_CHECK( curandSetPseudoRandomGeneratorSeed(curandGenerator, time(NULL)));
 	if(showGpuInfo){
 		cout<<"\nGPU:"<<prop.name;
 		/*
@@ -462,10 +460,19 @@ void cuWrap::colSum(float *ret, float * src, float scale_src, char trans, int ro
 		&scale_src, src,  (trans)?cols:rows, cuda_params::one_array_f, cols, &cuda_params::zerof, ret, rows));
 };
 void cuWrap::random(float *dest, int len){
-	CURAND_CHECK(curandGenerateUniform(curandGenerator, dest, len));
+	curandGenerator_t gen;
+	CURAND_CHECK( curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT) );
+	CURAND_CHECK( curandSetPseudoRandomGeneratorSeed(gen, time(NULL) + rand()));
+	CURAND_CHECK(curandGenerateUniform(gen, dest, len));
+	CURAND_CHECK(curandDestroyGenerator(gen));  
 };
 void cuWrap::random(double *dest, int len){
-	CURAND_CHECK(curandGenerateUniformDouble(curandGenerator, dest, len));
+	curandGenerator_t gen;
+	CURAND_CHECK( curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT) );
+	CURAND_CHECK( curandSetPseudoRandomGeneratorSeed(gen, time(NULL) + rand()));
+	CURAND_CHECK(curandGenerateUniformDouble(gen, dest, len));
+	CURAND_CHECK(curandDestroyGenerator(gen));  
+	
 };
 void cuWrap::replicate(float * dest, const float *src, int rows, int cols, int vNum, int hNum){
 	int size = rows * cols;

@@ -16,8 +16,6 @@ public:
 		delete [] tX;
 		delete [] tT;
 	}
-	void showResult(){		
-	}
 	sinSample(int num, int thrNum){
 		init(1, 1, LINEAR, false);
 		(*this)("threadsNum",thrNum);

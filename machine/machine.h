@@ -6,6 +6,7 @@
 #include "dataSetBase.h"
 #include "searchTool.h"
 #include "machineBase.h"
+#include "MachTrainer.h"
 #include "ANNBase.h"
 #include "MLP.h"
 #include "seriesDataBase.h"

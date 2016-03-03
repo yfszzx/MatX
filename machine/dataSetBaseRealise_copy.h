@@ -230,12 +230,7 @@ void dataSetBase<TYPE, CUDA>::makeValidList(int vldIdx){
 	}
 }
 
-template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::show(){
-	cout<<"\ninputNum:"<<inputNum<<"\toutputNum:"<<outputNum<<"\trandBatch£º"<<randBatch;
-	cout<<"\ncrossFolds:"<<crossFolds<<"\tvalidIdx:"<<validFoldIdx<<"\tdataNum:"<<dataNum<<"\ttrainNum:"<<trainNum<<"\tvalidNum"<<validNum;
-	cout<<"\nactFunc"<<actFunc;
-}
+
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::showValidCorrel(){
 	float corr;

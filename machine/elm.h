@@ -62,15 +62,14 @@ protected:
 	virtual bool trainAssist(){
 		Woutd.add(Wout);	
 		Y[0] = hide * Wout;		
-		cout<<"\n"<<trainCount;
-		cout<<"\ndataLoss"<<(Y[0] - T[0]).squaredNorm()/batchSize/2/batchInitLoss;
+		cout<<"\nfold:"<<foldIdx<<"\tcount:"<<trainCount<<"\ndataLoss"<<(Y[0] - T[0]).squaredNorm()/batchSize/2/batchInitLoss;
 		return !( trainCount < trainRounds);
 	};
 	virtual void trainTail(){
 		Wout = Woutd/trainRounds;
 	}
 public:
-	ELM(dataSetBase<TYPE, CUDA> & dtSet, string path, int foldIdx):MachineBase<TYPE, CUDA>(dtSet, path, foldIdx){
+	ELM(dataSetBase<TYPE, CUDA> & dtSet, string path, int fold):MachineBase<TYPE, CUDA>(dtSet, path, fold){
 		initConfig();		
 	};
 	

@@ -33,7 +33,6 @@ int cuda_threads_num;
 int cuda_grid_sizeX;
 int cuda_grid_sizeY;
 cublasHandle_t cublasHandle;
-curandGenerator_t curandGenerator;
 /*
 CUBLAS_STATUS_SUCCESS         =0,
 CUBLAS_STATUS_NOT_INITIALIZED =1,

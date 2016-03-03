@@ -16,6 +16,8 @@ private:
 	float trainLoss;
 	float validLoss;
 	float minValidLoss;
+	int trainRounds;
+	double meanLoss;
 
 	bool breakFlag(int cnt);
 	void step();
@@ -36,6 +38,7 @@ protected:
 	virtual void recordFileHead();
 	virtual int getBatchSize();
 	virtual void trainHead();
+	virtual float trainTail();
 	virtual void trainCore();
 	virtual bool trainAssist();
 	void initConfigValue();
@@ -43,10 +46,10 @@ protected:
 	virtual void annInitConfigValue() = 0;
 	virtual void annSetConfigValue(int idx, float val) = 0;
 	virtual void initMachine() = 0;
-	virtual void predictCore( MatX * _Y,  MatX* _X, int len = 1) = 0;
+	virtual void predict( MatX * _Y,  MatX* _X, int len = 1) = 0;
 	virtual void annTrainHead() = 0;
 	virtual void forward() = 0;
 	virtual void backward() = 0;
 public:
-	ANNBase(dataSetBase<TYPE, CUDA> & dtSet, string path);	
+	ANNBase(dataSetBase<TYPE, CUDA> & dtSet, string path, int foldIdx);	
 };

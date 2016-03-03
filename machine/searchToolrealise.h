@@ -178,8 +178,9 @@ bool searchTool<TYPE, CUDA>::line_search(MatXG &Ws,const MatXG &Grad, double los
 				}
 			}
 		}
+		overFlag = (moveCount == 0);
 	}
-	bool overFlag = (moveCount == 0);
+	
 	if(overFlag){
 		overPos = Pos;
 	};

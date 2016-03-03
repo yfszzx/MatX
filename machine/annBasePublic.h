@@ -34,6 +34,7 @@ void ANNBase<TYPE, CUDA>::trainHead(){
 		batchSizeControlar = initBatchSize;
 		Search.reset();	
 		grads.clear();
+		meanLoss = 0;
 		annTrainHead();
 };
 template <typename TYPE, bool CUDA>
@@ -86,6 +87,9 @@ void ANNBase<TYPE, CUDA>::setConfigValue(int idx, float val){
 	case 13:
 		finishZScale = val;
 		break;
+	case 14:
+		trainRounds = val;
+		break;
 	}
 	
 }
@@ -107,16 +111,18 @@ void ANNBase<TYPE, CUDA>::initConfigValue(){
 	initSet(subConfigsNum + 11, "initBatchSize", 0.1);
 	initSet(subConfigsNum + 12, "maxBatchSize", 0.8);
 	initSet(subConfigsNum + 13, "finishZScale", -0.5);	
+	initSet(subConfigsNum + 14, "trainRounds", 100);	
 
 };
 template <typename TYPE, bool CUDA>
-ANNBase<TYPE, CUDA>::ANNBase(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){
+ANNBase<TYPE, CUDA>::ANNBase(dataSetBase<TYPE, CUDA> & dtSet, string path, int foldIdx):MachineBase<TYPE, CUDA>(dtSet, path, foldIdx){
 	subConfigsNum = -1;
+	
 }
 
 template <typename TYPE, bool CUDA>
 int ANNBase<TYPE, CUDA>::getBatchSize(){
-	return batchSizeControlar * dt.trainNum;
+	return batchSizeControlar * dt.getDataNum(foldIdx);
 }
 template <typename TYPE, bool CUDA>
 bool ANNBase<TYPE, CUDA>::breakFlag(int cnt){
@@ -138,7 +144,7 @@ void ANNBase<TYPE, CUDA>::trainCore(){
 		cnt ++;
 		if(!dt.randBatch){
 			stepRecord();	
-			kbPause();	
+		//	kbPause();	
 			trainCount ++;
 			if(Search.getZ() < finishZScale){
 				break;
@@ -153,12 +159,13 @@ void ANNBase<TYPE, CUDA>::trainCore(){
 }
 template <typename TYPE, bool CUDA>
 bool ANNBase<TYPE, CUDA>::trainAssist(){
-	kbPause();	
 	stepRecord();			
 	Search.changeBatch();	
-	if(finish()){
-		return true;
-	}
+	return !( trainCount < trainRounds);
 	return false;
 
+}
+template <typename TYPE, bool CUDA>
+float ANNBase<TYPE, CUDA>::trainTail(){	
+	return meanLoss/trainRounds;
 }

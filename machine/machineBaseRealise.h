@@ -105,6 +105,7 @@ void MachineBase< TYPE, CUDA>::clear(){
 
 template <typename TYPE, bool CUDA>
 MachineBase< TYPE, CUDA>::MachineBase(dataSetBase<TYPE, CUDA> & dtSet, string path, int foldIndex):dt(dtSet){
+	checkFold(path);
 	inputNum = dt.inputNum;
 	unsuperviseDim = inputNum;
 	outputNum = dt.outputNum;
@@ -112,6 +113,8 @@ MachineBase< TYPE, CUDA>::MachineBase(dataSetBase<TYPE, CUDA> & dtSet, string pa
 	supervise = true;
 	finishFlag = false;
 	foldIdx = foldIndex;
+	trainRoundIdx = 0;
+	testMod = false;
 };
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::initConfig(){
@@ -171,6 +174,10 @@ void MachineBase<TYPE, CUDA>::unsupervise(){
 }
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::predictInit(){
+	if(Mach.num() == 0){
+		loadMach(MainFile);
+		showConfigSetting();		
+	}
 	predictHead();
 };
 template <typename TYPE, bool CUDA>
@@ -267,7 +274,7 @@ template <typename TYPE, bool CUDA>
 void * MachineBase<TYPE, CUDA>::threadMakeBatch( void * _this){	
 	MachineBase<TYPE, CUDA> & mach = *(MachineBase<TYPE, CUDA> *)_this;
 	srand(time(NULL) + mach.randSeeder);
-	mach.dt.makeBatch(mach.foldIdx, mach.getBatchSize());
+	mach.dt.makeBatch(mach.foldIdx, mach.getBatchSize(), true);
 	return NULL;
 }
 template <typename TYPE, bool CUDA>
@@ -288,6 +295,9 @@ void MachineBase< TYPE, CUDA>::trainInitialize(){
 	if(Mach.num() == 0){
 		loadMach(MainFile);
 		showConfigSetting();
+		
+	}
+	if(trainDataList.size() == 0){
 		dt.setDataList(trainDataList, TrainDataSet, foldIdx);
 	}
 	stringstream rcdFl;
@@ -305,20 +315,23 @@ void MachineBase< TYPE, CUDA>::trainInitialize(){
 	trainCount = 0;	
 }
 template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::trainFinished(){	
-	trainTail();
+float MachineBase< TYPE, CUDA>::trainFinished(){	
+	float loss = trainTail();
 	trainRoundIdx ++;
 	rcdFile.close();
 	save(MainFile);
-	save(trainRoundIdx);	
+	if(!testMod){
+		save(trainRoundIdx);	
+	}
+	return loss;
 }
 
 template <typename TYPE, bool CUDA>
-void MachineBase<TYPE, CUDA>::train(){
+float MachineBase<TYPE, CUDA>::train(){
 	trainInitialize();		
 	pthread_t tid1, tid2;
 	void *ret1,*ret2;
-	dt.makeBatch(foldIdx, getBatchSize());	
+	dt.makeBatch(foldIdx, getBatchSize(), true);	
 	if(dt.randBatch){				
 		do{
 			trainCount ++;
@@ -334,23 +347,31 @@ void MachineBase<TYPE, CUDA>::train(){
 		}while(1);
 	}else{
 		loadBatch();
-		trainCore();
-		trainAssist();
+		do{
+			trainCount ++;
+			trainCore();
+			if(trainAssist()){
+				break;
+			}
+		}while(1);
 	}
-	trainFinished();	
+	return trainFinished();	
 }
 template <typename TYPE, bool CUDA>
-void MachineBase<TYPE, CUDA>:: validate(int validNum){
+vector<float> MachineBase<TYPE, CUDA>:: validate(int validNum){
 	if(Mach.num() == 0){
 		loadMach(MainFile);
-		showConfigSetting();
+		showConfigSetting();		
+	}
+	if(validDataList.size() == 0){
 		dt.setDataList(validDataList, ValidDataSet, foldIdx);
 	}
 	dt.loadDataList(foldIdx, validDataList);
-	dt.makeBatch(foldIdx, validNum);	
+	dt.makeBatch(foldIdx, validNum, false);	
 	loadBatch();			
 	predict(Y, X, dt.seriesLen);
-	float l = dt.getLoss(Y, T);
-	cout<<"\nvalid loss"<<dt.getLoss(Y, T)/batchInitLoss;
+	return dt.getResult(foldIdx);
+	//float l = dt.getLoss(Y, T);
+	//cout<<"\nvalid loss"<<dt.getLoss(Y, T)/batchInitLoss;
 	
 }
