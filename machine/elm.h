@@ -47,9 +47,7 @@ protected:
 	virtual int getBatchSize(){
 		return batchNum;
 	}
-	virtual void predict( MatX * _Y,  MatX* _X, int len = 1){
-		_Y[0] = (_X[0] * Win).tanh() * Wout;
-	};
+	
 	virtual void trainHead(){
 		Woutd =  MatX::Zero(nodes, outputNum);
 		C = MatX::eye(nodes) * regOut;	
@@ -62,13 +60,18 @@ protected:
 	virtual bool trainAssist(){
 		Woutd.add(Wout);	
 		Y[0] = hide * Wout;		
-		cout<<"\nfold:"<<foldIdx<<"\tcount:"<<trainCount<<"\ndataLoss"<<(Y[0] - T[0]).squaredNorm()/batchSize/2/batchInitLoss;
+		cout<<"\nfold:"<<foldIdx<<"\tcount:"<<trainCount<<"\treg"<<regOut<<"\tdataLoss"<<getLoss(Y, T)/batchInitLoss;
 		return !( trainCount < trainRounds);
 	};
-	virtual void trainTail(){
+	virtual float trainTail(){
 		Wout = Woutd/trainRounds;
+		predict(Y,  X);
+		return getLoss(Y, T)/batchInitLoss;
 	}
 public:
+	virtual void predict( MatX * _Y,  MatX* _X, int len = 1){
+		_Y[0] = (_X[0] * Win).tanh() * Wout;
+	};
 	ELM(dataSetBase<TYPE, CUDA> & dtSet, string path, int fold):MachineBase<TYPE, CUDA>(dtSet, path, fold){
 		initConfig();		
 	};

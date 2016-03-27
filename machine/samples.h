@@ -1,27 +1,29 @@
-template <typename TYPE, bool CUDA>
-class sinSample: public dataSetBase<TYPE, CUDA>{
+template <bool CUDA>
+class sinSample: public dataSetBase<float, CUDA>{
 private:
-	int dtNum;
-protected:
-	
+	int samplesNum;	
 public:
-	void getDataSet(){		
-		TYPE *tX = new TYPE[dtNum];
-		TYPE *tT = new TYPE[dtNum];
-		for(int i = 0; i<dtNum; i++){
-			tX[i] = 3.1415 * TYPE(Mrand(10000) -5000)/10000;
-			tT[i] = sin(tX[i]);
+	virtual void getDataSet(){		
+		float * tmpX = new float[samplesNum];
+		float * tmpT = new float[samplesNum];
+		for(int i = 0; i < samplesNum; i++){
+			float t = 3.14 * float(rand()%10000 -5000)/10000;
+			tmpX[i] = t;
+			tmpT[i] = sin(t);
+			
 		}
-		loadDataSet(tX, tT, dtNum);
-		delete [] tX;
-		delete [] tT;
+		//以上代码生成数据
+
+		loadDataSet(tmpX, tmpT,  samplesNum);
+
+		delete [] tmpX;
+		delete [] tmpT;
+
 	}
-	sinSample(int num, int thrNum){
-		init(1, 1, LINEAR, false);
-		(*this)("threadsNum",thrNum);
-		dtNum = num;
+	sinSample(int num){		
+		init(1, 1);	
+		samplesNum = num;		
 	}
-	
 };
 
 #include "sampleDataSet/mnist.h"
@@ -66,7 +68,9 @@ template <typename TYPE, bool CUDA>
 class singleSeries: public seriesDataBase<TYPE, CUDA>{
 protected:
 	string path;
-	void createSamples(){//返回dtNum
+	
+public:
+	void getDataSet(){
 		if(!fileIsExist(path)){
 			Assert("\n文件不存在:" + path);
 		}
@@ -77,31 +81,13 @@ protected:
 			ret.push_back((TYPE)atof(line.c_str()));
 		}
 		fl.close();
-		int allLen = ret.size()-1;
-		loadSamples(ret.data(), ret.data() + 1, 1, ret.size() - 1);		
+		int allLen = ret.size() - 1;
+		loadDataSet(ret.data(), ret.data() + 1, 1, ret.size() - 1);		
 	}
-public:
 	singleSeries(string _path):seriesDataBase(){		
 		init(1, 1);		
-		set("activeFunc",LINEAR);
-		path = _path;
-		
-	}		
-	void pauseAction(){
-		string s;
-		cout<<"输入s保存csv";
-		cin>>s;
-		if(s[0] == 's'){
-			outputValidCsv("f:\\signlecsv.csv");
-		}
+		path = _path;		
 	}
-	void showResult(){
-		showValidCorrel();
-	}
-	virtual void showValidsResult(MatGroup<TYPE, CUDA> &T, MatGroup<TYPE, CUDA> &Y){
-		cout<<"\ncorr:"<<T.correl(Y);
-	};
-
 };
 template <typename TYPE, bool CUDA>
 struct stockIndex:public seriesDataBase<TYPE, CUDA>{

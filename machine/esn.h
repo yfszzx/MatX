@@ -10,7 +10,7 @@ private:
 	float regOut; //岭回归系数
 	float spectralRadius; //连接矩阵谱半径
 	float sparseDegree; //连接矩阵稀疏度
-	float batchScale;
+	float batchNum;
 	int trainRounds;
 
 	int hNum;
@@ -20,7 +20,7 @@ protected:
 		initSet(1, "regOut", 0);
 		initSet(2, "SR", 0.9);
 		initSet(3,  "SD", 0.1);
-		initSet(4,  "batchScale", 0.2);
+		initSet(4,  "batchNum", 100);
 		initSet(5,  "trainRounds", 10);
 	};
 	virtual void setConfigValue(int idx, float val){
@@ -38,7 +38,7 @@ protected:
 			sparseDegree = val;
 			break;
 		case 4:
-			batchScale = val;
+			batchNum = val;
 			break;
 		case 5:
 			trainRounds = val;
@@ -52,18 +52,9 @@ protected:
 		Wout  = MatX::Random(hNum, outputNum);
 		Mach<<Win<<Wjnt<<Wout;		
 	};
-	virtual void predictCore( MatX * _Y,  MatX * _X, int len){
-		MatX ones = MatX::Ones(_X[0].rows());
-		MatX H =  tanh(_X[0] * Win );
-		MatX nilH = MatX::Zero(H.rows(), H.cols());
-		_Y[0] = nilH.colJoint(_X[0]).colJoint(ones) * Wout;
-		for(int i = 1; i< len; i++){			
-			_Y[i] = H.colJoint(_X[i]).colJoint(ones) * Wout;
-			H = tanh(_X[i] * Win + H * Wjnt);
-		}
-	};
+	
 	virtual int getBatchSize(){
-		return dt.trainNum  * batchScale;
+		return batchNum;
 	}
 	virtual void trainHead(){
 		//生成系数的、特定谱半径的连接矩阵
@@ -75,13 +66,14 @@ protected:
 	}
 	virtual void trainCore(){	
 		MatX * HX = new MatX[dt.seriesLen];	
-		MatX ones = MatX::Ones(dt.X[0].rows());
+		MatX ones = MatX::Ones(X[0].rows());
 		MatX I = MatX::eye(hNum);	
 		MatXD A = MatX::Zero(hNum, hNum);	
-		MatX H = tanh(dt.X[0] * Win );
+		MatX H = tanh(X[0] * Win );
 		for(int i = 1; i < dt.seriesLen; i++){
-			HX[i] = H.colJoint(dt.X[i]).colJoint(ones);
-			H = tanh(dt.X[i] * Win + H * Wjnt);
+			
+			HX[i] = H.colJoint(X[i]).colJoint(ones);
+			H = tanh(X[i] * Win + H * Wjnt);
 			if(i >= dt.preLen){
 				A.add(I * regOut + HX[i].T() * HX[i]);
 			}
@@ -91,23 +83,35 @@ protected:
 		WoutTmp = 0;
 		MatX Af = A;		
 		for(int i = dt.preLen; i < dt.seriesLen; i++){
-			WoutTmp.add(Af * HX[i].T() * dt.T[i]);
+		
+			WoutTmp.add(Af * HX[i].T() * T[i]);
 		}
 	};
 	virtual bool trainAssist(){
 		WoutD.add(WoutTmp);	
-		Wout =WoutTmp;
-		cout<<"\nLoss:"<<getValidLoss()/dt.validInitLoss;
-		dt.showResult();
-		return !( trainCount < trainRounds);
+		Wout = WoutTmp;
+		predict(Y,  X, dt.seriesLen);
+		cout<<"\nfold:"<<foldIdx<<"\tcount:"<<trainCount<<"\treg"<<regOut<<"\tLoss:"<<getLoss(Y, T)/batchInitLoss;
+			return !( trainCount < trainRounds);
 	};
-	virtual void trainTail(){
+	virtual float trainTail(){
 		Wout = WoutD/trainRounds;
-		setBestMach();
+		predict(Y,  X, dt.seriesLen);
+		return getLoss(Y, T)/batchInitLoss;
+		
 	}
 public:
-	
-	ESN(dataSetBase<TYPE, CUDA> & dtSet, string path):MachineBase<TYPE, CUDA>(dtSet, path){
+	virtual void predict( MatX * _Y,  MatX * _X, int len){
+		MatX ones = MatX::Ones(_X[0].rows());
+		MatX H =  tanh(_X[0] * Win );
+		MatX nilH = MatX::Zero(H.rows(), H.cols());
+		_Y[0] = nilH.colJoint(_X[0]).colJoint(ones) * Wout;
+		for(int i = 1; i< len; i++){			
+			_Y[i] = H.colJoint(_X[i]).colJoint(ones) * Wout;
+			H = tanh(_X[i] * Win + H * Wjnt);
+		}
+	};
+	ESN(dataSetBase<TYPE, CUDA> & dtSet, string path, int fold):MachineBase<TYPE, CUDA>(dtSet, path){
 		initConfig();
 	};
 	

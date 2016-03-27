@@ -38,26 +38,24 @@ protected:
 		Bout =  MatX::Random(1, outputNum)/100;
 		Mach<<Win<<Wout<<Bin<<Bout;
 	}
-	virtual void predictCore( MatX * _Y, MatX * _X, int len = 1) {
-		_Y[0] = activeFunc(dt.actFunc, tanh(_X[0] * Win + Bin) * Wout + Bout);	
-	}
+	
 	virtual void annTrainHead(){
 		grads<<grad_in<<grad_out<<grad_Bin<<grad_Bout;
 	}
 	virtual void forward(){
-		hide = tanh(dt.X[0] * Win + Bin);
-		dt.Y[0] = activeFunc(dt.actFunc, hide * Wout + Bout);					
+		hide = tanh(X[0] * Win + Bin);
+		Y[0] = activeFunc(dt.actFunc, hide * Wout + Bout);					
 	}
 	virtual void backward(){
-		MatX diff = dt.Y[0] - dt.T[0];
+		MatX diff = Y[0] - T[0];
 		dataLoss = diff.squaredNorm()/batchSize/2;
 		loss = dataLoss + (regIn * Win.norm2() + regOut * Wout.norm2())/2;
-		diff = activeDerivFunc(dt.actFunc, diff, dt.Y[0]);
+		diff = activeDerivFunc(dt.actFunc, diff, Y[0]);
 		grad_out = hide.T() * diff ; 
 		grad_Bout = diff.sum();
 		diff = diff * Wout.T() ; 
 		diff = diff.cwiseProduct ( (TYPE)1.0f - square(hide));
-		grad_in = dt.X[0].T() * diff ;
+		grad_in = X[0].T() * diff ;
 		grad_Bin = diff.sum();
 		grads /= batchSize;
 		grad_in += regIn * Win;
@@ -88,7 +86,10 @@ protected:
 
 	}
 public:	
-	MLP(dataSetBase<TYPE, CUDA> & dtSet, string path):ANNBase(dtSet, path){
+	MLP(dataSetBase<TYPE, true> & dtSet, string path, int foldIdx):ANNBase(dtSet, path, foldIdx){
 		initConfig();
 	};
+	virtual void predict( MatX * _Y, MatX * _X, int len = 1) {
+		_Y[0] = activeFunc(dt.actFunc, tanh(_X[0] * Win + Bin) * Wout + Bout);	
+	}
 };

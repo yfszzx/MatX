@@ -23,6 +23,7 @@
 #include "dataSetBaseRealise.h"
 #include "searchToolRealise.h"
 #include "machineBaseRealise.h"
+#include "MachTrainerRealise.h"
 #include "ANNBasePrivate.h"
 #include "ANNBasePublic.h"
 #include "samples.h"

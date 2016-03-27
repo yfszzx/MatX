@@ -1,4 +1,4 @@
-namespace ANNGlobal{
+namespace MachineGlobal{
 	class timer{
 		double startTime;
 	public:
@@ -70,7 +70,30 @@ namespace ANNGlobal{
 			}
 		}
 	}
-	
+	int copyFile(string SourceFile,string NewFile){
+		ifstream in;
+		ofstream out;
+		in.open(SourceFile,ios::binary);
+		if(in.fail()){
+			Assert("无法打开"+ SourceFile);
+			in.close();
+			out.close();
+			return 0;
+		}
+		out.open(NewFile,ios::binary);
+		if(out.fail()){
+			Assert("无法创建"+ NewFile);
+			out.close();
+			in.close();
+			return 0;
+		}
+		else{
+			out<<in.rdbuf();
+			out.close();
+			in.close();
+			return 1;
+		}
+	}
 	const static int NullValid = -1;
 	
 	const static int MainFile = -1;
@@ -79,7 +102,7 @@ namespace ANNGlobal{
 	const static int ValidDataSet = 2;
 	const static int TestDataSet = 3;
 }
-using namespace ANNGlobal;
+using namespace MachineGlobal;
 template <typename TYPE, bool CUDA>
 class dataSetBase;
 template<typename TYPE, bool CUDA>

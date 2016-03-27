@@ -94,14 +94,7 @@ protected:
 		Bout = Wout + nodes * outputNum;
 		Mach<<W;
 	}
-	virtual void predict( MatXDevice * _Y, MatXDevice * _X, int len = 1) {		
-		int num = _X[0].rows();
-		MatXDevice tmpY(num, outputNum);
-		MatXDevice tmpH(num, nodes);	
-		W.exportData(Win, true);
-		forward(_X[0], prt(tmpY), prt(tmpH));
-		_Y[0] = tmpY;
-	}
+
 	virtual void annTrainHead(){
 		grads.clear();
 		gd = MatXDevice::Zero(weightLen);
@@ -126,11 +119,11 @@ protected:
 		loss = dataLoss;
 		//Ë¥¼õÏî
 		if(regIn != 0){
-			norm = cuWrap::norm(Win, nodes * inputNum) * 1;
+			norm = cuWrap::norm(Win, nodes * inputNum) ;
 			loss += regIn * norm  * norm  /2;
 		}
 		if(regOut != 0){
-			norm  = cuWrap::norm(Wout, nodes * outputNum) * 1;
+			norm  = cuWrap::norm(Wout, nodes * outputNum) ;
 			loss += regOut * norm  * norm  /2;
 		}
 		//diff = activeDerivFunc(actFunc, diff, Y[0]);
@@ -185,5 +178,13 @@ public:
 		if(grad_in != NULL){
 			cuWrap::free(grad_in);
 		}
+	}
+	virtual void predict( MatXDevice * _Y, MatXDevice * _X, int len = 1) {		
+		int num = _X[0].rows();
+		MatXDevice tmpY(num, outputNum);
+		MatXDevice tmpH(num, nodes);	
+		W.exportData(Win, true);
+		forward(_X[0], prt(tmpY), prt(tmpH));
+		_Y[0] = tmpY;
 	}
 };

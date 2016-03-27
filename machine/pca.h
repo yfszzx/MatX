@@ -52,12 +52,12 @@ protected:
 		double varV = 0;
 		float varTotal = eigenVals.allSum();
 		vector<int >list;
-		for(int i = 0; i< inputNum; i++){
+		for(int i = 0; i < inputNum; i++){
 			varV += eigenVals[i];
-			if(varV >= varTotal * varLoss){
-				list.push_back(i);
-
+			if(varV < varTotal * varLoss){
+				continue;
 			}
+			list.push_back(i);
 		}
 		rotMat = MatX::Diagonal(dev.cwiseInverse()) * eigenVects.colsMapping(list.data(), list.size());
 		unsuperviseDim = list.size();
@@ -126,6 +126,18 @@ protected:
 		return 0;
 	}
 public:
+	void showCorrel(int dimIdx){
+		cout<<"\n["<<dimIdx<<"]:\n";
+		for(int i = 0; i < covMat.rows(); i++){
+			cout<<"["<<i<<"]"<<covMat(dimIdx, i)<<"\t";
+		}
+		cout<<"\n";
+	}
+	void showEigen(){
+		cout<<"\neigenValues:";
+		cout<<eigenVals.T();
+		getchar();
+	}
 	void showParams(){
 		cout<<"\nmean:";
 		cout<<means;
@@ -133,9 +145,7 @@ public:
 		cout<<"\ndev:";
 		cout<<dev;
 		getchar();
-		cout<<"\neigenValues:";
-		cout<<eigenVals.T();
-		getchar();
+		showEigen();
 		cout<<"\ncovarianceMatrix:";
 		cout<<covMat;
 		getchar();

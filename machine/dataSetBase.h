@@ -7,12 +7,7 @@ protected:
 	vector<MachineBase<TYPE, CUDA> *> pretreatment;	
 	MatriX<TYPE, false> * X0;
 	MatriX<TYPE, false> * T0;
-	MatX ** X;
-	MatX ** Y;
-	MatX ** T;
-	MatX ** Xpre;//预备数据
-	MatX ** Tpre;//预备数据	
-
+	
 	int * dataSize;
 	double * initLoss;
 	int **dataList;
@@ -27,7 +22,7 @@ protected:
 	int foldsNum;	
 	void featureFilter(bool * featureList);
 	int thrdIdx(int foldIdx);	
-	void init(int iptNum, int optNum, int actf = LINEAR, bool seri = false);
+	void init(int iptNum, int optNum, int actf = LINEAR);
 	void loadDataSet(const TYPE * tX, const TYPE * tY, int _dataNum);
 	virtual bool trainSample(int idx, int foldIdx);
 	virtual bool validSample(int idx, int foldIdx);
@@ -45,6 +40,11 @@ public:
 	int preLen;
 	int seriesLen;
 	int threadsNum;
+	MatX ** X;
+	MatX ** Y;
+	MatX ** T;
+	MatX ** Xpre;//预备数据
+	MatX ** Tpre;//预备数据	
 
 	
 	void makeBatch(int foldIdx, int batchNum = 0, bool replacement = true);
@@ -60,9 +60,9 @@ public:
 	~dataSetBase();
 	virtual void getDataSet() = 0;	
 	vector<float> getResult(int foldIdx);
-	void showDataInfo();	
+	void show();	
 	void setThreadsNum(int num);
-	int getDataNum(int foldIdx);
-	
-	
+	int getDataNum(int foldIdx);	
+	bool testFold;
+	int roundIdx;
 };

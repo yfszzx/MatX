@@ -54,12 +54,12 @@ void dataSetBase<TYPE, CUDA>::makeBatch(int foldIdx, int num, bool replacement){
 		int size = subDataNum[idx];
 		if(replacement){			
 			for(int i = 0; i < num; i++){
-				list.push_back(Mrand(size));						
+				list.push_back(dataList[idx][Mrand(size)]);						
 			}
 		}else{
 			for(int i = 0; i < size; i++){
 				if(float(rand()%10000) / 10000 * size < num){
-					list.push_back(i);				
+					list.push_back(dataList[idx][i]);				
 				}			
 			}
 		}
@@ -147,11 +147,10 @@ void dataSetBase<TYPE, CUDA>::initDataSpace(){
 
 }
 template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::init(int iptNum, int optNum, int actf = LINEAR, bool seri = false){
+void dataSetBase<TYPE, CUDA>::init(int iptNum, int optNum, int actf){
 	inputNum = iptNum;
 	outputNum = optNum;	
 	actFunc = (activeFunctionType)actf;
-	seriesMod = seri;
 }
 template <typename TYPE, bool CUDA>
 dataSetBase<TYPE, CUDA>::dataSetBase(){
@@ -309,9 +308,9 @@ float dataSetBase<TYPE, CUDA>:: getCorrel(int foldIdx){
 	return t.correl(y);	
 }
 template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::showDataInfo(){
+void dataSetBase<TYPE, CUDA>::show(){
 	cout<<"\ninputNum:"<<inputNum<<"\toutputNum:"<<outputNum<<"\tactFunc"<<actFunc;
-	cout<<"\nrandBatch£º"<<randBatch<<"\tfoldsNum:"<<foldsNum<<"\tdataNum:"<<dataNum;	
+	cout<<"\nrandBatch£º"<<randBatch<<"\tfoldsNum:"<<foldsNum<<"\tdataNum:"<<dataNum<<"\ttestNum"<<testNum;	
 }
 template <typename TYPE, bool CUDA>
 vector<float> dataSetBase<TYPE, CUDA>::getResult(int foldIdx){

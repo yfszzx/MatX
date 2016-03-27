@@ -9,6 +9,7 @@
 #include <math.h>
 #include <direct.h>
 #include <sys\stat.h> 
+#include <memory>
 #include "Eigen/Eigen/Dense"
 using namespace Eigen;
 using namespace std;

@@ -39,11 +39,11 @@ protected:
 		}
 	}
 	virtual void forward(){
-		hide[0] = tanh(dt.X[0] * Win + Bin);
-		dt.Y[0] = activeFunc(dt.actFunc, hide[0] * Wout + Bout);
+		hide[0] = tanh(X[0] * Win + Bin);
+		Y[0] = activeFunc(dt.actFunc, hide[0] * Wout + Bout);
 		for(int i = 1; i < dt.seriesLen; i++){
-			hide[i] = tanh(dt.X[i] * Win + hide[i-1] * Wjnt + Bin);
-			dt.Y[i] = activeFunc(dt.actFunc, hide[i] * Wout + Bout);
+			hide[i] = tanh(X[i] * Win + hide[i-1] * Wjnt + Bin);
+			Y[i] = activeFunc(dt.actFunc, hide[i] * Wout + Bout);
 		}
 	};
 	virtual void backward(){
@@ -52,15 +52,15 @@ protected:
 		grads = 0;
 		dataLoss = 0;
 		for(int i = dt.seriesLen - 1; i >= dt.preLen ; i--){
-			diff = dt.Y[i] - dt.T[i];
+			diff = Y[i] - T[i];
 			dataLoss += diff.squaredNorm();
-			diff = activeDerivFunc(dt.actFunc, diff, dt.Y[i]);	
+			diff = activeDerivFunc(dt.actFunc, diff, Y[i]);	
 			grad_out += hide[i].transpose() * diff ; 
 			grad_Bout += diff.sum();
 			diff = diff * Wout.transpose() + diffLast;
 			diff = diff.cwiseProduct ( (TYPE)1.0f - square(hide[i]));
 			grad_jnt += hide[i-1].transpose() * diff;
-			grad_in += dt.X[i].transpose() * diff ;
+			grad_in += X[i].transpose() * diff ;
 			grad_Bin += diff.sum();
 			diffLast = diff * Wjnt.transpose();
 		}
@@ -81,27 +81,22 @@ protected:
 		Mach<<Win<<Wout<<Wjnt<<Bin<<Bout;	
 		
 	}
-	virtual void predictCore( MatX * _Y,  MatX* _X, int len = 1) {
-		MatX st = tanh(_X[0] * Win + Bin);
-		_Y[0] = activeFunc(dt.actFunc, st * Wout + Bout);
-		for(int i = 1; i < len; i++){
-			st = tanh(_X[i] * Win + st * Wjnt + Bin);
-			_Y[i] = activeFunc(dt.actFunc, st * Wout + Bout);
-		}	
-	}
+
 	virtual void annTrainHead(){
 		if(hide == NULL){
-			grad_out = Wout;
+			
+			hide = new MatX[dt.seriesLen];
+		}
+		grad_out = Wout;
 			grad_in = Win;
 			grad_Bout = Bout;
 			grad_Bin = Bin;
 			grad_jnt = Wjnt;
-			grads<<grad_in<<grad_out<<grad_jnt<<grad_Bin<<grad_Bout;
-			hide = new MatX[dt.seriesLen];
-		}
+			//grads<<grad_in<<grad_out<<grad_jnt<<grad_Bin<<grad_Bout;
+					grads<<grad_in<<grad_out<<grad_jnt<<grad_Bin<<grad_Bout;
 	}
 public:	
-	RNN(seriesDataBase<TYPE, CUDA> & dtSet, string path):ANNBase<TYPE, CUDA>(dtSet, path){	
+	RNN(seriesDataBase<TYPE, CUDA> &dtSet, string path, int foldIdx):ANNBase(dtSet, path, foldIdx){
 	 initConfig();
 	 hide = NULL;
 	};
@@ -109,6 +104,14 @@ public:
 		if(hide != NULL){
 			delete [] hide;
 		}
+	}
+	virtual void predict( MatX * _Y,  MatX* _X, int len = 1) {
+		MatX st = tanh(_X[0] * Win + Bin);
+		_Y[0] = activeFunc(dt.actFunc, st * Wout + Bout);
+		for(int i = 1; i < len; i++){
+			st = tanh(_X[i] * Win + st * Wjnt + Bin);
+			_Y[i] = activeFunc(dt.actFunc, st * Wout + Bout);
+		}	
 	}
 };
 

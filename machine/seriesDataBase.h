@@ -2,14 +2,14 @@ template<typename TYPE, bool CUDA>
 class seriesDataBase:public dataSetBase<TYPE, CUDA>{
 private:
 	int smartSeriesLen(int seriNum, int len){
-		int num = (len - preLen)/(seriesLen - preLen);
-		int left = (len - preLen)%(seriesLen - preLen);
+		int num = (len - preLen) / (seriesLen - preLen);
+		int left = (len - preLen) % (seriesLen - preLen);
 		seriesLen  += left%num;
 		num = (len - preLen)/(seriesLen - preLen);
 		return num * seriNum;
 	}
 protected:
-	void loadSamples(const TYPE * _X, const TYPE * _T, int seriNum, int len){
+	void loadDataSet(const TYPE * _X, const TYPE * _T, int seriNum, int len){
 		dataNum = smartSeriesLen(seriNum, len);
 		TYPE *tmpX = new TYPE[dataNum * inputNum * seriesLen];
 		TYPE *tmpT = new TYPE[dataNum * outputNum * seriesLen];
@@ -36,7 +36,6 @@ protected:
 		delete [] tmpX;
 		delete [] tmpT;
 	}
-	virtual void createSamples() = 0;
 public:
 	seriesDataBase(){
 		preLen = 1;
@@ -45,5 +44,6 @@ public:
 	void show(){
 		dataSetBase::show();
 		cout<<"\nseriesLen:"<<seriesLen<<"\tpreLen:"<<preLen;
+		
 	}
 };

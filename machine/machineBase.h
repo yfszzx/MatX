@@ -9,7 +9,10 @@ private:
 	void trainInitialize();
 	float trainFinished();
 	void saveConfig(ofstream & fl);
+	void saveConfigText(string path);
+	
 	void loadConfig(ifstream & fl);
+	void loadConfigText();
 
 	static void * threadTrain( void * _this);
 	static void * threadMakeBatch( void * _this);		
@@ -56,8 +59,8 @@ protected:
 	virtual float trainTail() = 0;
 	virtual void predictHead(){};	
 	virtual TYPE unsupervisedExamine(MatX * _Y,  MatX * _X, int len = 1){ return 0;};//用于检验非监督学习的结果
-	TYPE getValidLoss();
 	void kbGet(string name);
+	TYPE getLoss(MatX * _Y,  MatX * _T);
 	
 public:
 	bool testMod;
@@ -70,5 +73,10 @@ public:
 	int getUnsupDim();
 	virtual void predict( MatX * _Y,  MatX * _X, int len = 1) = 0;
 	void predictInit();
+	int getRoundIdx();
+	void createConfigFile();
+	void saveCurrentConfigText();
+	float get(string name);
+
 };
 
