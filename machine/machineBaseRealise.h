@@ -18,6 +18,22 @@ string MachineBase< TYPE, CUDA>::binFileName(int index){
 	return nm.str();
 }
 template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::readMachName(int &fold, int &round, string _name){
+	vector<string> name;
+	split(_name, "_", name);
+	if(name[1] == "NullValid"){
+		fold = NullValid;
+	}else{
+		fold = atoi(name[1].c_str());
+	}
+	if(name[2] == "MainFile"){
+		round = MainFile;
+	}else{
+		round = atoi(name[2].c_str());
+	}
+	
+}
+template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::saveConfig(ofstream & fl){
 	int num = configRecorder.size();
 	fl.write((char *)&num, sizeof(int));
@@ -25,6 +41,18 @@ void MachineBase< TYPE, CUDA>::saveConfig(ofstream & fl){
 		fl.write((char *)&configRecorder[i], sizeof(float));
 		fl.write((char *)configName[i].c_str(), sizeof(char) * 256);
 	}
+};
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::loadConfig(ifstream & fl){
+	int num;
+	fl.read((char *)&num, sizeof(int));
+	float val;
+	char str[256];
+	for(int i = 0; i < num; i++){
+		fl.read((char *)&val, sizeof(float));
+		fl.read((char *)str, sizeof(char) * 256);
+		(*this)(str, val);
+	}	
 };
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::saveConfigText(string path){
@@ -41,25 +69,16 @@ void MachineBase< TYPE, CUDA>::loadConfigText(){
 	int num = configRecorder.size();
 	for(int i = 0; i < num; i++){
 		string s;
-		fl>>s>>configRecorder[i];
+		float v;
+		fl>>s>>v;
 		if(s != configName[i]){
 			Assert("配置文件错误,文件参数名" + s + " 与算法参数名 " + configName[i] + " 不一致");
 		}
+		(*this)(s, v);
 	}
 	fl.close();
 };
-template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::loadConfig(ifstream & fl){
-	int num;
-	fl.read((char *)&num, sizeof(int));
-	float val;
-	char str[256];
-	for(int i = 0; i < num; i++){
-		fl.read((char *)&val, sizeof(float));
-		fl.read((char *)str, sizeof(char) * 256);
-		(*this)(str, val);
-	}	
-};
+
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::save(int index){
 	string file = binFileName(index);
@@ -70,22 +89,6 @@ void MachineBase< TYPE, CUDA>::save(int index){
 	fl.write((char *)&trainRoundIdx, sizeof(int));
 	Mach.save(fl);	
 	fl.close();	
-}
-template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::createConfigFile(){
-	string path = machPath + "config.txt";
-	if(!fileIsExist(path)){
-		saveConfigText(path);
-		cout<<"\n在下面这个文件中配置算法参数:\n"<<machPath << "config.txt";
-		cout<<"\n[输入任意字符继续]";
-		string s;
-		cin>>s;
-		copyFile(path, machPath + "currentConfig.txt");
-	}	
-}
-template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::saveCurrentConfigText(){
-	saveConfigText(machPath + "currentConfig.txt");
 }
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::load(int index){
@@ -100,6 +103,27 @@ void MachineBase< TYPE, CUDA>::load(int index){
 	Mach.read(fl);	
 	fl.close();
 }
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::createConfigFile(){
+	string path = machPath + "config.txt";
+	if(!fileIsExist(path)){
+		saveConfigText(path);
+		cout<<"\n在下面这个文件中配置算法参数:\n"<<machPath << "config.txt";
+		cout<<"\n[输入任意字符继续]";
+		string s;
+		cin>>s;
+		
+	}	
+	string cpath = machPath + "currentConfig.txt";
+	if(!fileIsExist(cpath)){
+		copyFile(path, cpath);
+	}
+}
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::saveCurrentConfigText(){
+	saveConfigText(machPath + "currentConfig.txt");
+}
+
 /*
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::clear(){
@@ -202,6 +226,7 @@ void MachineBase< TYPE, CUDA>::showConfigSetting(){
 			cout<<"\n["<<i<<"]"<<configName[i]<<"\t"<<configRecorder[i];
 		}		
 	}
+	cout<<"\n";
 };
 template <typename TYPE, bool CUDA>
 int MachineBase< TYPE, CUDA>::getUnsupDim(){
@@ -212,12 +237,10 @@ void MachineBase<TYPE, CUDA>::unsupervise(){
 	supervise = false;
 }
 template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::predictInit(){
+void MachineBase< TYPE, CUDA>::predictInit(int roundIdx){
 	if(Mach.num() == 0){
-		loadMach(MainFile);
-		showConfigSetting();		
+		loadMach(roundIdx);
 	}
-	predictHead();
 };
 template <typename TYPE, bool CUDA>
 int MachineBase< TYPE, CUDA>::getRoundIdx(){
@@ -227,7 +250,6 @@ template <typename TYPE, bool CUDA>
 TYPE MachineBase< TYPE, CUDA>::getLoss(MatX * _Y,  MatX * _T){
 	double ls = 0;
 	for(int i = dt.preLen ; i < dt.seriesLen; i++){
-		//Dbg3(i, _Y[i].str(), _T[i].str());
 		ls += (_Y[i] - _T[i]).norm2();
 	}
 	return ls/_T[0].rows()/(dt.seriesLen - dt.preLen)/2;	
@@ -253,23 +275,29 @@ void MachineBase<TYPE, CUDA>::loadBatch(){
 	batchSize = X[0].rows();	
 }
 template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::loadMach(int rndIdx){
-	Mach.clear();
-	initMachine();	
-	if(fileIsExist(binFileName(MainFile))){
-		load(rndIdx);
+void MachineBase< TYPE, CUDA>::loadMach(int rndIdx){	
+	if(fileIsExist(binFileName(rndIdx))){
+		load(rndIdx);	
+		loadConfigText();
+	}else{
+		loadConfigText();
+		Mach.clear();
+		initMachine();	
+	}
+}
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::initLoad(bool showConf = false){
+	if(Mach.num() == 0){		
+		createConfigFile();
+		loadMach(MainFile);	
+		if(showConf){
+			showConfigSetting();	
+		}
 	}
 }
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::trainInitialize(){	
-
-	if(Mach.num() == 0){		
-		createConfigFile();
-		loadMach(MainFile);
-		loadConfigText();
-		showConfigSetting();	
-		getchar();getchar();getchar();
-	}
+	initLoad();
 	if(trainDataList.size() == 0){
 		dt.setDataList(trainDataList, TrainDataSet, foldIdx);
 	}
@@ -358,4 +386,7 @@ float MachineBase<TYPE, CUDA>:: get(string name){
 	Assert("不存在参数" + name);
 	return 0;
 }
-
+template <typename TYPE, bool CUDA>
+bool MachineBase<TYPE, CUDA>:: isTrained(){
+	return fileIsExist(binFileName(MainFile));
+}

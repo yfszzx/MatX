@@ -327,7 +327,6 @@ void cuWrap::transpose(int src_row, int src_col,  double *mat, int size){
 	double * tmp;
 	cuWrap::malloc((void **)&tmp, sizeof(double) * size);
 	memD2D(tmp, mat, sizeof(double) * size);
-	CUDA_CHECK;
 	CUBLAS_CHECK(cublasDgeam(cublasHandle,  CUBLAS_OP_T,  CUBLAS_OP_N, src_col, src_row, 
 		&cuda_params::oned, tmp, src_row,  &cuda_params::zerod, mat,  src_col, mat, src_col));
 	cuWrap::free(tmp);
@@ -480,7 +479,7 @@ void cuWrap::replicate(float * dest, const float *src, int rows, int cols, int v
 	int vSize = size * vNum;	
 	int blocks = (size + cuda_threads_num - 1) / cuda_threads_num;
 	g_replicate<<<blocks, cuda_threads_num>>>(dest, src, rows, size, vSize, vRows, vNum, hNum);
-	CUDA_CHECK;
+	CUDA_SYNC;
 };
 
 void cuWrap::replicate(double * dest, const double *src, int rows, int cols, int vNum, int hNum){
@@ -489,7 +488,7 @@ void cuWrap::replicate(double * dest, const double *src, int rows, int cols, int
 	int vSize = size * vNum;	
 	int blocks = (size + cuda_threads_num - 1) / cuda_threads_num;
 	g_replicateDouble<<<blocks, cuda_threads_num>>>(dest, src, rows, size, vSize, vRows, vNum, hNum);
-	CUDA_CHECK;
+	CUDA_SYNC;
 };
 void cuWrap::colsMapping(float * dest, const float *src, const int *list, int listLen, int rows, int cols){
 	int * gList;
@@ -498,7 +497,7 @@ void cuWrap::colsMapping(float * dest, const float *src, const int *list, int li
 	int blocks = (rows + cuda_threads_num - 1) / cuda_threads_num;
 	dim3 B(listLen, blocks);
 	g_colsMapping<<<B, cuda_threads_num>>>(dest, src, gList, rows, cols);
-	CUDA_CHECK;
+	CUDA_SYNC;
 	cuWrap::free(gList);
 };
 void cuWrap::colsMapping(double * dest,const  double *src, const int *list, int listLen, int rows, int cols){
@@ -508,7 +507,7 @@ void cuWrap::colsMapping(double * dest,const  double *src, const int *list, int 
 	int blocks = (rows + cuda_threads_num - 1) / cuda_threads_num;
 	dim3 B(listLen, blocks);
 	g_colsMappingDouble<<<B, cuda_threads_num>>>(dest, src, gList, rows, cols);
-	CUDA_CHECK;
+	CUDA_SYNC;
 	cuWrap::free(gList);
 };
 void cuWrap::rowsMapping(float * dest, const float *src, const int *list, int listLen, int rows, int cols){
@@ -518,7 +517,7 @@ void cuWrap::rowsMapping(float * dest, const float *src, const int *list, int li
 	int blocks = (cols + cuda_threads_num - 1) / cuda_threads_num;
 	dim3 B(listLen, blocks);
 	g_rowsMapping<<<B, cuda_threads_num>>>(dest, src, gList, rows, cols, listLen);
-	CUDA_CHECK;
+	CUDA_SYNC;
 	cuWrap::free(gList);
 };
 void cuWrap::rowsMapping(double * dest,const  double *src, const int *list, int listLen, int rows, int cols){
@@ -528,7 +527,7 @@ void cuWrap::rowsMapping(double * dest,const  double *src, const int *list, int 
 	int blocks = (cols + cuda_threads_num - 1) / cuda_threads_num;
 	dim3 B(listLen, blocks);
 	g_rowsMappingDouble<<<B, cuda_threads_num>>>(dest, src, gList, rows, cols, listLen);
-	CUDA_CHECK;
+	CUDA_SYNC;
 	cuWrap::free(gList);
 };
 void cuWrap::matPlusRowVec(float *mat, const float *vec, float matScl, float vecScl, int rows, int cols){
@@ -538,7 +537,7 @@ void cuWrap::matPlusRowVec(float *mat, const float *vec, float matScl, float vec
 	int blocks = (rows + cuda_threads_num - 1) / cuda_threads_num;
 	dim3 B(cols, blocks);
 	g_MatPlusRowVec<<<B, cuda_threads_num>>>(mat, vec, vecScl,rows);
-	CUDA_CHECK;
+	CUDA_SYNC;
 };
 void cuWrap::matPlusRowVec(double *mat, const double *vec, double matScl, double vecScl, int rows, int cols){
 	if(matScl != 1){
@@ -547,7 +546,7 @@ void cuWrap::matPlusRowVec(double *mat, const double *vec, double matScl, double
 	int blocks = (rows + cuda_threads_num - 1) / cuda_threads_num;
 	dim3 B(cols, blocks);
 	g_MatPlusRowVecDouble<<<B, cuda_threads_num>>>(mat, vec, vecScl,rows);
-	CUDA_CHECK;
+	CUDA_SYNC;
 }
 void cuWrap::matPlusColVec(float *mat, const float *vec, float matScl, float vecScl, int rows, int cols){
 	if(matScl != 1){
@@ -556,7 +555,7 @@ void cuWrap::matPlusColVec(float *mat, const float *vec, float matScl, float vec
 	int blocks = (cols + cuda_threads_num - 1) / cuda_threads_num;
 	dim3 B(rows, blocks);
 	g_MatPlusColVec<<<B, cuda_threads_num>>>(mat, vec, vecScl, rows, cols);
-	CUDA_CHECK;
+	CUDA_SYNC
 };
 void cuWrap::matPlusColVec(double *mat, const double *vec, double matScl, double vecScl, int rows, int cols){
 	if(matScl != 1){
@@ -565,7 +564,7 @@ void cuWrap::matPlusColVec(double *mat, const double *vec, double matScl, double
 	int blocks = (cols + cuda_threads_num - 1) / cuda_threads_num;
 	dim3 B(rows, blocks);
 	g_MatPlusColVecDouble<<<B, cuda_threads_num>>>(mat, vec, vecScl, rows, cols);
-	CUDA_CHECK;
+	CUDA_SYNC;
 };
 
 void cuWrap::Gre(float *dest, const  float * x, const float *y, int len){
@@ -677,19 +676,14 @@ void cuWrap::inverse(float * invMat, const float * mat, int size){
 	float ** mpg;
 	cuWrap::malloc((void **) & mpg, sizeof(float *));
 	cuWrap::memH2D(mpg, &m, sizeof(float *));
-	CUDA_CHECK;
 	CUBLAS_CHECK(cublasSgetrfBatched(cublasHandle, size, mpg, size, pivo, info, 1));	
-	CUDA_CHECK;
 	float ** impg;
 	cuWrap::malloc((void **) & impg, sizeof(float *));
 	cuWrap::memH2D(impg, &invMat, sizeof(float *));
-	CUDA_CHECK;
 	const float ** cmpg;
 	cuWrap::malloc((void **) & cmpg, sizeof(float *));
 	cuWrap::memD2D(cmpg, mpg, sizeof(float *));
-	CUDA_CHECK;
 	cublasSgetriBatched(cublasHandle, size, cmpg, size,  pivo, impg, size, info, 1);	
-	CUDA_CHECK;
 
 	// CUBLAS_CHECK(cublasSmatinvBatched(cublasHandle, size, cmpg, 1, impg, 1, info, 1));
 	cuWrap::free(info);

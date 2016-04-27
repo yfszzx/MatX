@@ -163,6 +163,8 @@ dataSetBase<TYPE, CUDA>::dataSetBase(){
 	threadsNum = 1;
 	X = NULL;
 	batchList = NULL;
+	forecastX = NULL;
+	seriesMod = false;
 }
 template <typename TYPE, bool CUDA>
 dataSetBase<TYPE, CUDA>::~dataSetBase(){
@@ -181,12 +183,15 @@ dataSetBase<TYPE, CUDA>::~dataSetBase(){
 		delete [] Tpre;
 		delete [] dataSize;
 		delete [] initLoss;
-
 		delete [] X0;
 		delete [] T0;
 		
-		
 	}	
+	if(forecastX != NULL){
+		delete [] forecastX;
+		delete [] forecastY;
+		delete [] forecastSumY;
+	}
 }
 
 template <typename TYPE, bool CUDA>
@@ -324,4 +329,24 @@ template <typename TYPE, bool CUDA>
 int dataSetBase<TYPE, CUDA>::getDataNum(int idx){
 	return subDataNum[thrdIdx(idx)];
 
+}
+template <typename TYPE, bool CUDA>
+void dataSetBase<TYPE, CUDA>::load(TYPE * _Y,const TYPE * _X, int _dataNum){
+	forecastLen = 1;
+	forecastOutput = _Y;
+	if(forecastX != NULL){
+		delete [] forecastX;
+		delete [] forecastY;
+		delete [] forecastSumY;
+	}
+	forecastX = new MatX[1];
+	forecastY = new MatX[1];
+	forecastSumY = new MatXD[1];
+	forecastX[0] = MatX::Zero(inputNum, _dataNum);
+	forecastX[0].importData(_X);
+	forecastX[0] = forecastX[0].T();
+	if(pretreatment.size() > 0){
+		pretreat(forecastX[0]);
+
+	}
 }

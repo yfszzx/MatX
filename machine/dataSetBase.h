@@ -45,8 +45,17 @@ public:
 	MatX ** T;
 	MatX ** Xpre;//预备数据
 	MatX ** Tpre;//预备数据	
+	MatX * forecastX;
+	MatX * forecastY;
+	MatXD * forecastSumY;
+	TYPE * forecastOutput;
+	int forecastLen;
 
-	
+	bool testFold;
+	int roundIdx;
+
+
+	void setDataList(vector<int> & list, int mod, int foldIdx);
 	void makeBatch(int foldIdx, int batchNum = 0, bool replacement = true);
 	float loadBatch(int foldIdx, MatX * & X, MatX * & Y, MatX * & T);//返回initLoss	
 	void operator ()(string name, float val);
@@ -55,14 +64,15 @@ public:
 	float getLoss(int foldIdx);
 	float getCorrel(int foldIdx);
 	virtual void getMoreResult(vector<float> & res, int foldIdx){};
-	void setDataList(vector<int> & list, int mod, int foldIdx);
+	
 	dataSetBase();
 	~dataSetBase();
-	virtual void getDataSet() = 0;	
+	virtual void getDataSet(){};	
 	vector<float> getResult(int foldIdx);
+
+
 	void show();	
 	void setThreadsNum(int num);
 	int getDataNum(int foldIdx);	
-	bool testFold;
-	int roundIdx;
+	void load(TYPE * Y, const TYPE * X, int _dataNum);
 };

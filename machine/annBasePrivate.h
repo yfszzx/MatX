@@ -2,7 +2,7 @@ template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::step(){
 	do{		
 		forward();			
-		backward();	
+		backward();
 	}while(!Search.move(Mach, grads, loss, dt.randBatch));	
 }
 template <typename TYPE, bool CUDA>

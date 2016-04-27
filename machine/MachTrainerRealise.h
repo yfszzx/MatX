@@ -35,11 +35,37 @@ template <typename MACH, typename DATASET>
 	testMod = false;
 
 }
+ template <typename MACH, typename DATASET>
+ MachTrainer<MACH, DATASET>::MachTrainer(DATASET & dataSet, string path):dt(dataSet){
+	 threadsNum = 1;
+	 machPath = path;
+	 rcdFile = NULL;
+	 readMachList(machPath);
+	for(int i = 0; i < foldsNum; i ++){
+		machList.push_back(construct(foldsList[i]));
+		
+	}
+	predictInit();
+	
+}
 template <typename MACH, typename DATASET>
 void  MachTrainer<MACH, DATASET>::operator ()(string name, float val){
 	for(int i = 0; i < foldsNum; i ++){
 		(*machList[i])(name, val);
 	}
+}
+template <typename MACH, typename DATASET>
+int  MachTrainer<MACH, DATASET>::trainInitialize(){
+	int ret, lastIdx;
+	for(int i = 0; i < foldsNum ; i++){
+		machList[i]->initLoad(i == 0);
+		int idx = machList[i]->getRoundIdx();
+		if(i == 0 || idx < lastIdx){
+			lastIdx = idx;
+			ret = i;
+		}
+	}
+	return ret;
 }
 template <typename MACH, typename DATASET>
 void  MachTrainer<MACH, DATASET>::train(){
@@ -48,10 +74,11 @@ void  MachTrainer<MACH, DATASET>::train(){
 		resultRcorder[0].clear();
 		resultRcorder[0].push_back(machList[0]->train());
 	}else{
+		int initIdx = trainInitialize();
 		dt.setThreadsNum(threadsNum);
 		pthread_t * tid = new pthread_t[threadsNum];
 		void ** ret = new void *[threadsNum];
-		for(int i = 0; i < (foldsNum + threadsNum -1)/threadsNum; i++){
+		for(int i = initIdx; i < (foldsNum + threadsNum -1)/threadsNum; i++){
 			for(int t = 0; t < threadsNum; t++){
 				int idx = i * threadsNum + t;
 				if(idx == foldsNum){
@@ -100,7 +127,7 @@ void  MachTrainer<MACH, DATASET>::validate(int num){
 	}
 }
 template <typename MACH, typename DATASET>
-void  MachTrainer<MACH, DATASET>::record(){
+void  MachTrainer<MACH, DATASET>::record(bool testSet){
 	int num = resultRcorder[0].size();
 	if(rcdFile == NULL){			
 		rcdFile = new ofstream [num];
@@ -126,10 +153,18 @@ void  MachTrainer<MACH, DATASET>::record(){
 	}else{
 		for(int j = 0; j < num; j++){
 			rcdFile[j]<<machList[0]->getRoundIdx()<<",";
+			double avg = 0;
 			for(int i = 0; i < foldsNum + 1; i++){	
+				if(!testSet && i == foldsNum){
+					break;
+				}
 				rcdFile[j]<<resultRcorder[i][j]<<",";
+				if(i < foldsNum){
+					avg += resultRcorder[i][j];
+				}
 			}
-			rcdFile[j]<<endl;
+			avg /= foldsNum;
+			rcdFile[j]<<avg<<endl;
 		}
 	}
 
@@ -190,5 +225,72 @@ void  MachTrainer<MACH, DATASET>::verify(int samplesNum, bool testSet){
 	if(testSet){
 		test(samplesNum);
 	}
-	record();
+	record(testSet);
 }
+template <typename MACH, typename DATASET>
+void  MachTrainer<MACH, DATASET>::predict(){
+	for(int i = 0; i < foldsNum; i++){
+		machList[i]->predict(dt.forecastY, dt.forecastX, dt.forecastLen);
+		for(int j = 0; j < dt.forecastLen; j++){
+			if(i == 0){
+				dt.forecastSumY[j] = dt.forecastY[j];
+			}else{
+				dt.forecastSumY[j].add(dt.forecastY[j]);
+			}
+		}
+	}	
+	for(int j = 0; j < dt.forecastLen; j++){
+		dt.forecastY[j] = dt.forecastSumY[j]/foldsNum;
+	}
+	dt.forecastY[0].T().exportData(dt.forecastOutput);
+};
+template <typename MACH, typename DATASET>
+void  MachTrainer<MACH, DATASET>::predictInit(){
+	for(int i = 0; i < foldsNum; i++){
+		machList[i]->predictInit(roundIdxList[i]);		
+		//machList[i]->predictInit(MainFile);		
+	
+	}
+	machList[0]->showConfigSetting();
+}
+template <typename MACH, typename DATASET>
+void MachTrainer<MACH, DATASET>::readMachList(vector<int> & foldList, vector<int> & roundList, string path){
+	struct _finddata_t fb;   //查找相同属性文件的存储结构体
+	path = path + "machine_*";        
+	long    handle = _findfirst(path.c_str(),&fb);	
+	int fold;
+	int round;
+	if (handle != -1){		
+		MACH::readMachName(fold, round, fb.name);
+		foldList.push_back(fold);
+		roundList.push_back(round);
+		while (_findnext(handle, &fb) == 0){
+			MACH::readMachName(fold, round, fb.name);
+			foldList.push_back(fold);
+			roundList.push_back(round);
+		}
+	}	
+};
+template <typename MACH, typename DATASET>
+void MachTrainer<MACH, DATASET>::readMachList(string path){
+	ifstream fl(path + "bestMachs.txt");
+	foldsList.clear();
+	roundIdxList.clear();
+	if(!fl){
+		readMachList(foldsList, roundIdxList, path);
+	}else{
+		int fold;
+		int round;
+		while(fl>>fold && fl>>round){
+			foldsList.push_back(fold);
+			roundIdxList.push_back(round);			
+		}
+		fl.close();
+		
+		
+	}
+	foldsNum = foldsList.size();
+	cout<<"\n读取了"<<foldsNum<<"个算法文件";	
+	int * prt = foldsList.data();
+	dt("foldsNum", *max_element(prt, prt + foldsNum) + 1) ;	
+};

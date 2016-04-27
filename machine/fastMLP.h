@@ -85,13 +85,13 @@ protected:
 			break;
 		}
 	}
-	virtual void initMachine(){		
+	virtual void initMachine(){	
 		weightLen = nodes * (inputNum + 1) + (nodes + 1) * outputNum;
 		W = MatXDevice::Random(weightLen) / 100;
 		cuWrap::malloc((void **)&Win, sizeof(TYPE) * weightLen	);
 		Bin = Win + nodes * inputNum;
 		Wout = Bin + nodes;
-		Bout = Wout + nodes * outputNum;
+		Bout = Wout + nodes * outputNum;		
 		Mach<<W;
 	}
 

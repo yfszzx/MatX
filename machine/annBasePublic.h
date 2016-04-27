@@ -2,7 +2,6 @@ template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::saveParameters(ofstream & fl){
 	fl.write((char *)&batchTrainRounds, sizeof(float));
 	fl.write((char *)&batchSizeControlar, sizeof(float));
-	fl.write((char *)& minValidLoss, sizeof(float));
 	fl.write((char *)& trainCount, sizeof(int));
 	double tm = rcdTimer.get();
 	fl.write((char *)& tm, sizeof(double));
@@ -13,7 +12,6 @@ template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::loadParameters(ifstream & fl){
 	fl.read((char *)&batchTrainRounds, sizeof(float));
 	fl.read((char *)&batchSizeControlar, sizeof(float));
-	fl.read((char *)& minValidLoss, sizeof(float));
 	fl.read((char *)& trainCount, sizeof(int));
 	double tm;
 	fl.read((char *)& tm, sizeof(double));
@@ -28,7 +26,6 @@ void ANNBase<TYPE, CUDA>::recordFileHead(){
 };
 template <typename TYPE, bool CUDA>
 void ANNBase<TYPE, CUDA>::trainHead(){
-		minValidLoss = 0;
 		trainLoss = 0;
 		batchTrainRounds = initBatchTrainRounds;
 		batchSizeControlar = initBatchSize;

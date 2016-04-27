@@ -1,7 +1,7 @@
 #define IDX2C(i,j,ld) (((j)*(ld))+(i))
 #define CUDA_CHECK show_cuda_error(__LINE__, __FILE__);
+#define CUDA_SYNC cuda_synchronize(__LINE__, __FILE__);
 inline void show_cuda_error(int line,char *file ){ 
-	cudaThreadSynchronize();
 	cudaError_t err_last = cudaGetLastError();//获得最近一次错误的错误代码
 	if(err_last){
 		cout<<"\nCUDA "<<cudaGetErrorString(err_last)<<" at uncertain position before line "<<line<<"  file "<<file<<"\n";//显示错误内容
@@ -9,7 +9,14 @@ inline void show_cuda_error(int line,char *file ){
 	}
 }
 
-
+inline void cuda_synchronize(int line,char *file ){ 
+	cudaThreadSynchronize();
+	cudaError_t err_last = cudaGetLastError();//获得最近一次错误的错误代码
+	if(err_last){
+		cout<<"\nCUDA "<<cudaGetErrorString(err_last)<<" at uncertain position before line "<<line<<"  file "<<file<<"\n";//显示错误内容
+		getchar();
+	}
+}
 #define CUBLAS_CHECK(x) show_cublas_error((x),__LINE__,__FILE__);
 inline void show_cublas_error(cublasStatus_t err,int line,char *file){
 	if(CUBLAS_STATUS_SUCCESS!=err){
@@ -18,7 +25,7 @@ inline void show_cublas_error(cublasStatus_t err,int line,char *file){
 	}
 }
 inline void show_cublas_error(cudaError_t err,int line,char *file){
-	cudaThreadSynchronize();
+	//cudaThreadSynchronize();
 	if(err){
 		cout<<"\nCUBLAS "<<cudaGetErrorString(err)<<"at line "<<line<<"  file "<<file<<endl;
 	}

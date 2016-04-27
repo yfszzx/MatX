@@ -14,8 +14,6 @@ private:
 	int saveFrequence;
 	//记录训练过程的参数
 	float trainLoss;
-	float validLoss;
-	float minValidLoss;
 	int trainRounds;
 	double meanLoss;
 

@@ -13,6 +13,7 @@
 #include "RNN.h"
 #include "ELM.h"
 #include "ESN.h"
+#include "normalize.h"
 #include "PCA.h"
 #include "SVM.h"
 #include "PLS.h"

@@ -57,26 +57,30 @@ protected:
 	virtual void trainCore() = 0;
 	virtual bool trainAssist(){return 1;};
 	virtual float trainTail() = 0;
-	virtual void predictHead(){};	
+	//virtual void predictHead(){};	
 	virtual TYPE unsupervisedExamine(MatX * _Y,  MatX * _X, int len = 1){ return 0;};//用于检验非监督学习的结果
 	void kbGet(string name);
 	TYPE getLoss(MatX * _Y,  MatX * _T);
 	
 public:
+
 	bool testMod;
 	MachineBase(dataSetBase<TYPE, CUDA> & dtSet, string path, int foldIdx = NullValid);
 	~MachineBase();	
 	void operator ()(string s, float val);	
+	static void readMachName(int &fold, int &round, string name);
 	void showConfigSetting();
 	float train();
 	vector<float> validate(int validNum);
 	int getUnsupDim();
 	virtual void predict( MatX * _Y,  MatX * _X, int len = 1) = 0;
-	void predictInit();
+	void predictInit(int roundIdx = MainFile);
 	int getRoundIdx();
 	void createConfigFile();
 	void saveCurrentConfigText();
 	float get(string name);
-
+	bool isTrained();
+	void initLoad(bool showConf = false);
+	
 };
 
