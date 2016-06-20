@@ -14,6 +14,7 @@
 #include <thrust/extrema.h>
 using namespace std;
 
+
 #include "cuda/cuGlobal.h"
 #include "cuda/deviceFuncs.h"
 #include "cuda/cuWrap.h"
