@@ -1,10 +1,12 @@
 namespace cuWrap{
-	void initCuda(bool showGpuInfo);
+	 void initCuda(bool showGpuInfo);
 	 void malloc(void ** p, size_t size);
 	 void free(void * p);
+	 //D mean device, H mean host
 	 void memD2H(void  *dest, const void  *src, size_t size);
 	 void memH2D(void *dest, const void *src, size_t size);
 	 void memD2D(void *dest, const void *src, size_t size);
+	 //f mean float d mean double
 	 void memDf2Hd(double  *dest, const float  *src, int size);
 	 void memHf2Dd(double *dest, const float *src, int size);
 	 void memDf2Dd(double *dest, const float *src, int size);
@@ -75,6 +77,7 @@ namespace cuWrap{
 	 void random(double *dest, int len);
 	 void inverse(float * invMat, const float * mat, int size); 
 	 void test();
+	 // Gre mean greater , Equ mean equare , Les mean less
 	 void Gre(float *dest,const  float * x, const float *y, int len);
 	 void Gre(double *dest,const  double * x, const double *y, int len);
 	 void GreEqu(float *dest,const  float * x, const float *y, int len);
@@ -93,4 +96,26 @@ namespace cuWrap{
 	 void diagonal(double * dest, const double * src, int size);
 
 	 
+
+
+	 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 };

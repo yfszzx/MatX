@@ -22,7 +22,14 @@ void dataSetBase<TYPE, CUDA>::pretreat(MatX &x){
 		pretreatment[i]->predict(&ret, &x);	
 		x = ret;
 	}	
-	
+}
+template <typename TYPE, bool CUDA>
+void dataSetBase<TYPE, CUDA>::pretreatT(MatX &t){
+	MatX ret;
+	for(int i = 0; i < pretreatmentT.size(); i++){
+		pretreatmentT[i]->predict(&ret, &t);	
+		t = ret;
+	}	
 }
 template <typename TYPE, bool CUDA>
 void dataSetBase<TYPE, CUDA>::makeData(int foldIdx){	
@@ -236,10 +243,17 @@ void dataSetBase<TYPE, CUDA>::loadDataSet(const TYPE * _X, const TYPE * _T, int 
 	T0[0].importData(_T);
 };
 template <typename TYPE, bool CUDA>
-void dataSetBase<TYPE, CUDA>::setPretreat(MachineBase<TYPE, CUDA> * pre){
-	pretreatment.push_back(pre);
-	pre->predictInit();
-	inputNum = pre->getUnsupDim();
+void dataSetBase<TYPE, CUDA>::setPretreat(MachineBase<TYPE, CUDA> * preX, MachineBase<TYPE, CUDA> * preT){
+	if(preX != NULL){
+		pretreatment.push_back(preX);
+		preX->predictInit();
+		inputNum = preX->getUnsupDim();
+	}
+	if(preT != NULL){
+		pretreatmentT.push_back(preT);
+		preT->predictInit();
+		outputNum = preT->getUnsupDim();
+	}
 }
 template <typename TYPE, bool CUDA>
 bool dataSetBase<TYPE, CUDA>::trainSample(int idx, int foldIdx){

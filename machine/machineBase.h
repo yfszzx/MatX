@@ -43,6 +43,8 @@ protected:
 	vector<float> configRecorder;
 	vector<string> configName;
 
+	void saveMach(string file, MatXG &mach);
+	string binFileName(int roundIdx, string path);
 	void initConfig();
 	void initSet(int configIdx, string name, float val);	
 	void unsupervise();
@@ -83,4 +85,5 @@ public:
 	void initLoad(bool showConf = false);
 	
 };
+
 

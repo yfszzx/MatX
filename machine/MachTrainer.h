@@ -32,4 +32,6 @@ public:
 	void setTestMod(bool mod);
 	float get(string name);
 	void predict();
+	int getFoldsNum() const;
 };
+

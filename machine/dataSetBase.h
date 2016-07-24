@@ -5,6 +5,7 @@ class dataSetBase{
 protected:
 	int ** batchList;
 	vector<MachineBase<TYPE, CUDA> *> pretreatment;	
+	vector<MachineBase<TYPE, CUDA> *> pretreatmentT;
 	MatriX<TYPE, false> * X0;
 	MatriX<TYPE, false> * T0;
 	
@@ -16,6 +17,7 @@ protected:
 	void makeData(int foldIdx);
 	void initDataSpace();
 	void pretreat(MatX & x);
+	void pretreatT(MatX & t);
 
 	int testNum;
 	int dataNum;
@@ -60,7 +62,7 @@ public:
 	float loadBatch(int foldIdx, MatX * & X, MatX * & Y, MatX * & T);//·µ»ØinitLoss	
 	void operator ()(string name, float val);
 	void loadDataList(int foldIdx, vector<int> & list);
-	void setPretreat(MachineBase<TYPE, CUDA> * pre);
+	void setPretreat(MachineBase<TYPE, CUDA> * preX, MachineBase<TYPE, CUDA> * preT = NULL);
 	float getLoss(int foldIdx);
 	float getCorrel(int foldIdx);
 	virtual void getMoreResult(vector<float> & res, int foldIdx){};

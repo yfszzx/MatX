@@ -86,10 +86,17 @@ protected:
 
 	}
 public:	
-	MLP(dataSetBase<TYPE, true> & dtSet, string path, int foldIdx):ANNBase(dtSet, path, foldIdx){
+	MLP(dataSetBase<TYPE, CUDA> & dtSet, string path, int foldIdx):ANNBase(dtSet, path, foldIdx){
 		initConfig();
 	};
 	virtual void predict( MatX * _Y, MatX * _X, int len = 1) {
+		//for (int i = 0; i < 20 ; ++i) {
+		//	for (int j = 0; j < 20 ; ++j) {
+		//		cout<<Win(i,j)<<" ";
+		//	}
+		//	cout<<endl;
+		//}
+		
 		_Y[0] = activeFunc(dt.actFunc, tanh(_X[0] * Win + Bin) * Wout + Bout);	
 	}
 };

@@ -1,6 +1,7 @@
 #define IDX2C(i,j,ld) (((j)*(ld))+(i))
 #define CUDA_CHECK show_cuda_error(__LINE__, __FILE__);
 #define CUDA_SYNC cuda_synchronize(__LINE__, __FILE__);
+#define CUBLAS_CHECK(x) show_cublas_error((x),__LINE__,__FILE__);
 inline void show_cuda_error(int line,char *file ){ 
 	cudaError_t err_last = cudaGetLastError();//获得最近一次错误的错误代码
 	if(err_last){
@@ -17,7 +18,6 @@ inline void cuda_synchronize(int line,char *file ){
 		getchar();
 	}
 }
-#define CUBLAS_CHECK(x) show_cublas_error((x),__LINE__,__FILE__);
 inline void show_cublas_error(cublasStatus_t err,int line,char *file){
 	if(CUBLAS_STATUS_SUCCESS!=err){
 		cout<<"\nCUBLAS "<<err<<" at line "<<line<<"  file "<<file<<endl;

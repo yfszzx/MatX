@@ -71,7 +71,7 @@ protected:
 			meansD += meansTmp;
 			devD += devTmp;			
 		}
-		cout<<"\n"<<trainCount;
+		cout<<" round:"<<trainCount<<"\r";
 		return !( trainCount < trainRounds);
 	};
 	virtual float trainTail(){

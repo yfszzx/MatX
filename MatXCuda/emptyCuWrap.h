@@ -87,5 +87,23 @@ void  cuWrap::Equ(float *dest, const  float * x, const float *y, int len) {}
 void  cuWrap::Equ(double *dest, const  double * x, const double *y, int len) {}
 void  cuWrap::NotEqu(float *dest, const  float * x, const float *y, int len) {};
 void  cuWrap::NotEqu(double *dest, const  double * x, const double *y, int len) {};
-
-
+void cuWrap::memDf2Hd(double *dest, const float *src, int size) { } 
+void cuWrap::memHf2Dd(double *dest, const float *src, int size) { } 
+void cuWrap::memDf2Dd(double *dest, const float *src, int size) { } 
+void cuWrap::memDd2Hf(float *dest, const double *src,int size) { } 
+void cuWrap::memHd2Df(float *dest, const double *src, int size) { } 
+void cuWrap::memDd2Df(float *dest, const double *src, int size) { } 
+void cuWrap::plusFloatMat(double *dest, double sclD, const float *src, float sclS, int size) { } 
+void cuWrap::sigmDeriv(double *diff, double * val, int len) { } 
+void cuWrap::sigmDeriv(float *diff, float * val,int len) { } 
+void cuWrap::tanhDeriv(double *diff, double * val, int len) { } 
+void cuWrap::tanhDeriv(float *diff, float * val, int len) { } 
+void cuWrap::sqrt(float *p, int len) { } 
+void cuWrap::sqrt(double *p, int len) { } 
+void cuWrap::cwiseInverse(float *dest, float *src, int size) { } 
+void cuWrap::cwiseInverse(double *dest, double *src, int size) { } 
+void cuWrap::Identity(float * dest, int rows, int cols) { } 
+void cuWrap::Identity(double * dest, int rows, int cols) { } 
+void cuWrap::diagonal(float * dest, const float * src, int size) { } 
+void cuWrap::diagonal(double * dest, const double * src, int size) { } 
+ 

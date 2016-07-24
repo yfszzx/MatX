@@ -187,4 +187,39 @@ public:
 		forward(_X[0], prt(tmpY), prt(tmpH));
 		_Y[0] = tmpY;
 	}
+	void fastBin2Commen(string path, int index) {
+		MatGroup<TYPE, true> cMach;
+	/*	MatXDevice cWin =  MatXDevice::Zero(nodes, inputNum);
+		MatXDevice cWout =  MatXDevice::Zero(outputNum, nodes);
+		MatXDevice cBin =  MatXDevice::Zero(nodes, 1);
+		MatXDevice cBout =  MatXDevice::Zero(outputNum, 1)*/;
+		MatXDevice cWin =  MatXDevice::Zero(inputNum, nodes);
+		MatXDevice cWout =  MatXDevice::Zero(nodes, outputNum);
+		MatXDevice cBin =  MatXDevice::Zero(1, nodes);
+		MatXDevice cBout =  MatXDevice::Zero(1, outputNum);
+		W.exportData(Win, true);
+		//cWin = cWin.T();
+		//cWout = cWout.T();
+		//cBin = cBin.T();
+		//cBout = cBout.T();
+		cWin.importData(Win, true);
+		cWout.importData(Wout, true);
+		cBin.importData(Bin, true);
+		cBout.importData(Bout, true);
+		//cWin = cWin.T();
+		//cWout = cWout.T();
+		//cBin = cBin.T();
+		//cBout = cBout.T();
+		cMach<<cWin<<cWout<<cBin<<cBout;
+		/*for (int n = 0; n <  100; ++n) {
+			cout<<W(n, 0);
+		}
+		for (int i = 0; i < 20 ; ++i) {
+			for (int j = 0; j < 20 ; ++j) {
+				cout<<cWin(i,j)<<" ";
+			}
+			cout<<endl;
+		}*/
+		saveMach(binFileName(index, path), cMach);
+	}
 };

@@ -111,7 +111,7 @@ protected:
 			devD += devTmp;
 			covMatD += covMatTmp;
 		}
-		cout<<"\n"<<trainCount;
+		cout<<" round:"<<trainCount<<"\r";
 		return !( trainCount < trainRounds);
 	};
 	virtual float trainTail(){

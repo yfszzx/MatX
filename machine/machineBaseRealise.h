@@ -1,14 +1,14 @@
 template <typename TYPE, bool CUDA>
-string MachineBase< TYPE, CUDA>::binFileName(int index){	
+string MachineBase<TYPE, CUDA>::binFileName(int index, string path) {
 	stringstream nm;
 	if(index == AllMachine){
-		nm<<machPath<<"machine_*";
+		nm<<path<<"machine_*";
 		return nm.str();
 	};
 	if(foldIdx == NullValid){
-		nm<<machPath<<"machine_NullValid_";
+		nm<<path<<"machine_NullValid_";
 	}else{
-		nm<<machPath<<"machine_"<<foldIdx<<"_";
+		nm<<path<<"machine_"<<foldIdx<<"_";
 	}
 	if(index == MainFile){
 		nm<<"MainFile.bin";
@@ -16,6 +16,11 @@ string MachineBase< TYPE, CUDA>::binFileName(int index){
 		nm<<index<<".bin";
 	}
 	return nm.str();
+}
+
+template <typename TYPE, bool CUDA>
+string MachineBase< TYPE, CUDA>::binFileName(int index){	
+	return binFileName(index, machPath);
 }
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::readMachName(int &fold, int &round, string _name){
@@ -40,6 +45,7 @@ void MachineBase< TYPE, CUDA>::saveConfig(ofstream & fl){
 	for(int i = 0; i < num; i++){
 		fl.write((char *)&configRecorder[i], sizeof(float));
 		fl.write((char *)configName[i].c_str(), sizeof(char) * 256);
+		//cout<<configName[i]<<"　"<<configRecorder[i]<<endl;
 	}
 };
 template <typename TYPE, bool CUDA>
@@ -71,6 +77,7 @@ void MachineBase< TYPE, CUDA>::loadConfigText(){
 		string s;
 		float v;
 		fl>>s>>v;
+		//Dbg4( s, v, i, configName[i]);
 		if(s != configName[i]){
 			Assert("配置文件错误,文件参数名" + s + " 与算法参数名 " + configName[i] + " 不一致");
 		}
@@ -79,16 +86,20 @@ void MachineBase< TYPE, CUDA>::loadConfigText(){
 	fl.close();
 };
 
+
 template <typename TYPE, bool CUDA>
-void MachineBase< TYPE, CUDA>::save(int index){
-	string file = binFileName(index);
+void MachineBase<TYPE, CUDA>::saveMach(string file, MatXG &mach) {
 	cout<<"\n正在保存"<<file;
 	ofstream fl(file, ios::binary);
 	saveConfig(fl);
 	saveParameters(fl);
 	fl.write((char *)&trainRoundIdx, sizeof(int));
-	Mach.save(fl);	
+	mach.save(fl);	
 	fl.close();	
+}
+template <typename TYPE, bool CUDA>
+void MachineBase< TYPE, CUDA>::save(int index){
+	saveMach(binFileName(index), Mach);
 }
 template <typename TYPE, bool CUDA>
 void MachineBase< TYPE, CUDA>::load(int index){

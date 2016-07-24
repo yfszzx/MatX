@@ -294,3 +294,8 @@ void MachTrainer<MACH, DATASET>::readMachList(string path){
 	int * prt = foldsList.data();
 	dt("foldsNum", *max_element(prt, prt + foldsNum) + 1) ;	
 };
+template <typename MACH, typename DATASET>
+inline int MachTrainer<MACH, DATASET>::getFoldsNum() const {
+	return foldsNum;
+}
+
