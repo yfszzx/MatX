@@ -458,6 +458,21 @@ void cuWrap::colSum(float *ret, float * src, float scale_src, char trans, int ro
 	CUBLAS_CHECK(cublasSgemm(cublasHandle,  ( cublasOperation_t)trans, CUBLAS_OP_N, rows, 1, cols,  
 		&scale_src, src,  (trans)?cols:rows, cuda_params::one_array_f, cols, &cuda_params::zerof, ret, rows));
 };
+void cuWrap::normalRandom(float *dest, int len, float mean, float dev){
+	curandGenerator_t gen;
+	CURAND_CHECK( curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT) );
+	CURAND_CHECK( curandSetPseudoRandomGeneratorSeed(gen, time(NULL) + rand()));
+	CURAND_CHECK(curandGenerateNormal(gen, dest, len, mean, dev));
+	CURAND_CHECK(curandDestroyGenerator(gen));  
+};
+void cuWrap::normalRandom(double *dest, int len, double mean, double dev){
+	curandGenerator_t gen;
+	CURAND_CHECK( curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT) );
+	CURAND_CHECK( curandSetPseudoRandomGeneratorSeed(gen, time(NULL) + rand()));
+	CURAND_CHECK(curandGenerateNormalDouble(gen, dest, len, mean, dev));
+	CURAND_CHECK(curandDestroyGenerator(gen));  
+	
+};
 void cuWrap::random(float *dest, int len){
 	curandGenerator_t gen;
 	CURAND_CHECK( curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT) );

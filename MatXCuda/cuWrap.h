@@ -73,6 +73,8 @@ namespace cuWrap{
 	 void colSum(float *ret, float * src, float scale_src, char trans, int rows, int cols);
 	 void rowSum(double *ret, double * src, double scale_src, char trans, int rows, int cols);
 	 void rowSum(float *ret, float * src, float scale_src, char trans, int rows, int cols);
+	 void normalRandom(double *dest, int len, double mean, double dev);
+	 void normalRandom(float *dest, int len, float mean, float dev);
 	 void random(float *dest, int len);
 	 void random(double *dest, int len);
 	 void inverse(float * invMat, const float * mat, int size); 

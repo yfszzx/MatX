@@ -154,7 +154,13 @@ template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> MatriX< TYPE,CUDA>::Random(int _rows, int  _cols){
 	MatriX< TYPE,CUDA> ret(_rows, _cols);
 	return ret.selfRandom();
-}; 
+};
+template <typename TYPE, bool CUDA>
+MatriX<TYPE, CUDA> MatriX<TYPE, CUDA>::NormalRandom(int _rows, int _cols /*= 1*/, TYPE dev /*= 1*/, TYPE mean /*= 0*/) {
+	MatriX< TYPE,CUDA> ret(_rows, _cols);
+	return ret.selfNormalRandom(dev, mean);
+
+} 
 template <typename TYPE, bool CUDA>
 MatriX<TYPE,CUDA> MatriX< TYPE,CUDA>::Constant(int _rows, int  _cols, TYPE val){
 	MatriX<TYPE, CUDA> ret(_rows, _cols);
@@ -221,6 +227,23 @@ MatriX< TYPE, CUDA> &MatriX< TYPE,CUDA>::selfRandom(){
 		*this += -1;
 		}
 	}else{
+		eMat() = eigenMat::Random(rows(), cols());	
+	}
+	return *this;
+}
+template <typename TYPE, bool CUDA>
+MatriX< TYPE, CUDA> &MatriX< TYPE,CUDA>::selfNormalRandom(TYPE dev, TYPE mean){
+	if(CUDA){
+		if(randDebug){
+			cout<<"\nCUDA的随机数生成处于调试状态，将matrixGlobal中的randDebug设为false恢复正常";
+			assert(0); // eigen没有normal矩阵
+			eigenMat tmp = eigenMat::Random(rows(), cols());	
+			cuWrap::memH2D(dataPrt(), tmp.data(), sizeof(TYPE) * size());
+		}else{
+		cuWrap::normalRandom(dataPrt(), size(), mean, dev);
+		}
+	}else{
+		assert(0); // eigen没有normal矩阵
 		eMat() = eigenMat::Random(rows(), cols());	
 	}
 	return *this;

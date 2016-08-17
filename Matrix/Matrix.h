@@ -66,7 +66,9 @@ public:
 	MatriX &  operator = (const MatriX<float, !CUDA> &m);
 	MatriX & operator = (TYPE val);
 	MatriX & selfRandom();
+	MatriX &MatriX::selfNormalRandom(TYPE dev, TYPE mean);
 	static  MatriX<TYPE, CUDA> Random(int _rows, int  _cols = 1);
+	static  MatriX<TYPE, CUDA> NormalRandom(int _rows, int  _cols = 1, TYPE dev = 1, TYPE mean = 0);
 	static  MatriX<TYPE, CUDA> Constant(int _rows, int  _cols, TYPE val);
 	static  MatriX<TYPE, CUDA> Ones(int _rows, int  _cols = 1);
 	static  MatriX<TYPE, CUDA> Zero(int _rows, int  _cols = 1);
@@ -179,7 +181,6 @@ public:
 	inline MatriX & square();
 	inline MatriX & abs();
 	inline MatriX & sqrt();
-	
 };
 
 

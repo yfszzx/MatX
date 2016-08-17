@@ -14,6 +14,7 @@
 #include "ELM.h"
 #include "ESN.h"
 #include "normalize.h"
+#include "noise.h"
 #include "PCA.h"
 #include "SVM.h"
 #include "PLS.h"
@@ -27,6 +28,7 @@
 #include "MachTrainerRealise.h"
 #include "ANNBasePrivate.h"
 #include "ANNBasePublic.h"
+#include "testMPL.h"
 #include "samples.h"
 
 
